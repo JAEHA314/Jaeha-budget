@@ -1075,97 +1075,38 @@ function monthbar() {
 
 function cards(s) {
   return `
-    <div class="cards">
-
-      <article>
-
-        <span class="summary-label">
-
-          <i class="summary-icon">
-            ${svgIcon('income')}
-          </i>
-
-          수입
-
-        </span>
-
-        <b>
-          +${won(s.income)}
-        </b>
-
+    <section class="cards home-summary">
+      <article class="summary-card summary-income">
+        <div class="summary-label">수입</div>
+        <b>+${won(s.income)}</b>
       </article>
 
-      <article>
-
-        <span class="summary-label">
-
-          <i class="summary-icon">
-            ${svgIcon('expense')}
-          </i>
-
-          지출
-
-        </span>
-
-        <b>
-          −${won(s.expense)}
-        </b>
-
+      <article class="summary-card summary-expense">
+        <div class="summary-label">지출</div>
+        <b>−${won(s.expense)}</b>
       </article>
 
-      <article>
-
-        <span class="summary-label">
-
-          <i class="summary-icon">
-            ${svgIcon('saving')}
-          </i>
-
-          저축
-
-        </span>
-
-        <b>
-          ${won(s.saving)}
-        </b>
-
+      <article class="summary-card summary-saving">
+        <div class="summary-label">저축</div>
+        <b>${won(s.saving)}</b>
       </article>
 
-      <article>
+      <article class="summary-card summary-investment">
+        <div class="summary-label">투자</div>
 
-        <span class="summary-label">
-
-          <i class="summary-icon">
-            ${svgIcon('investment')}
-          </i>
-
-          투자
-
-        </span>
-
-        <div class="invest">
-
-          <small>
-            매도·배당
-
-            <b>
-              +${won(s.plus)}
-            </b>
-          </small>
-
-          <small>
-            매수
-
-            <b>
-              −${won(s.buy)}
-            </b>
-          </small>
-
+        <div class="investment-part">
+          <span>매도·배당</span>
+          <b>+${won(s.plus)}</b>
         </div>
 
-      </article>
+        <div class="investment-divider"></div>
 
-    </div>
+        <div class="investment-part">
+          <span>매수·투자</span>
+          <b>−${won(s.buy)}</b>
+        </div>
+      </article>
+    </section>
   `;
 }
 
@@ -1173,15 +1114,17 @@ function home() {
   const items = monthly();
   const s = sum(items);
 
-  let balanceText;
+  return `
+    ${monthbar()}
 
-  if (s.balance > 0) {
-    balanceText = `+${won(s.balance)}`;
-  } else if (s.balance < 0) {
-    balanceText = `−${won(Math.abs(s.balance))}`;
-  } else {
-    balanceText = won(0);
-  }
+    <section class="balance">
+      <span>이번 달 생활수지</span>
+      <b>${signedMoney(s.balance)}</b>
+    </section>
+
+    ${cards(s)}
+  `;
+}
 
   return `
     ${monthbar()}
