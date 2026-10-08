@@ -281,38 +281,41 @@ svg {
 
 
 /* =========================================================
-   HOME - BALANCE
+   HOME
 ========================================================= */
 
 .balance {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
 
-  min-height: 155px;
+  min-height: 126px;
 
-  margin-bottom: 18px;
-  padding: 30px;
+  margin: 0 0 18px;
+  padding: 23px 20px;
 
-  border-radius: 19px;
-  background: #f2f2f2;
+  border-radius: 20px;
+  background: #eeeef0;
 
-  text-align: center;
+  text-align: left;
 }
 
 .balance span {
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 
-  color: #686868;
-  font-size: 13px;
+  color: #707070;
+  font-size: 12px;
   font-weight: 500;
 }
 
 .balance b {
-  font-size: clamp(31px, 4vw, 42px);
-  font-weight: 650;
-  line-height: 1.1;
+  color: #555557;
+
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1;
+
   letter-spacing: -0.045em;
 }
 
@@ -323,30 +326,19 @@ svg {
 
 .cards {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
 
-  margin-bottom: 37px;
+  margin: 0;
 }
 
 .cards article {
-  min-height: 126px;
+  min-height: 112px;
 
-  padding: 21px 23px;
+  padding: 18px 19px;
 
-  border-radius: 17px;
-  background: #f4f4f4;
-}
-
-.cards article > b {
-  display: block;
-
-  margin-top: 17px;
-
-  color: #1b1b1b;
-  font-size: 22px;
-  font-weight: 650;
-  letter-spacing: -0.035em;
+  border-radius: 19px;
+  background: #eeeef0;
 }
 
 .summary-label {
@@ -354,48 +346,72 @@ svg {
   align-items: center;
   gap: 9px;
 
-  color: #555;
-  font-size: 13px;
-  font-weight: 550;
+  color: #5f5f61;
+
+  font-size: 12px;
+  font-weight: 500;
 }
 
 .summary-icon {
+  flex: 0 0 auto;
+
+  width: 17px;
+  height: 17px;
+
+  color: #5c5c5e;
+}
+
+.cards article > b {
   display: block;
 
-  width: 19px;
-  height: 19px;
+  margin-top: 16px;
 
-  color: #4f4f4f;
+  color: #4e4e50;
+
+  font-size: 18px;
+  font-weight: 650;
+  line-height: 1.1;
+
+  letter-spacing: -0.035em;
 }
 
 .invest {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
 
-  margin-top: 14px;
+  margin-top: 12px;
 }
 
 .invest small {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
 
-  color: #777;
-  font-size: 11px;
+  min-width: 0;
+
+  color: #8b8b8d;
+
+  font-size: 10px;
+  line-height: 1.25;
 }
 
 .invest small + small {
-  padding-left: 18px;
-  border-left: 1px solid #dedede;
+  padding-left: 15px;
+
+  border-left: 1px solid #d7d7d9;
 }
 
 .invest b {
-  color: #1c1c1c;
-  font-size: 18px;
-  font-weight: 650;
-  letter-spacing: -0.03em;
-}
+  color: #515153;
 
+  font-size: 15px;
+  font-weight: 650;
+
+  letter-spacing: -0.025em;
+
+  white-space: nowrap;
+}
 
 /* =========================================================
    HOME - SAVINGS GOAL
