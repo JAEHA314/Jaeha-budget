@@ -114,7 +114,15 @@ svg {
   align-items: center;
   justify-content: center;
 
-  width: 100%;
+  /*
+    shell의 좌우 14px 여백을 다시 확장해서
+    앱 전체 폭을 기준으로 중앙 정렬
+  */
+  width: calc(100% + 28px);
+
+  margin-left: -14px;
+  margin-right: -14px;
+
   height: 50px;
   min-height: 50px;
 
@@ -122,7 +130,6 @@ svg {
 
   background: #fff;
 }
-
 .nav-capsule {
   display: grid;
   grid-template-columns: repeat(5, 48px);
