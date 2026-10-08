@@ -1173,47 +1173,25 @@ function home() {
   const items = monthly();
   const s = sum(items);
 
+  let balanceText;
+
+  if (s.balance > 0) {
+    balanceText = `+${won(s.balance)}`;
+  } else if (s.balance < 0) {
+    balanceText = `−${won(Math.abs(s.balance))}`;
+  } else {
+    balanceText = won(0);
+  }
+
   return `
     ${monthbar()}
 
     <section class="balance">
-
-      <span>
-        이번 달 생활수지
-      </span>
-
-      <b>
-        ${signedMoney(s.balance)}
-      </b>
-
+      <span>이번 달 생활수지</span>
+      <b>${balanceText}</b>
     </section>
 
     ${cards(s)}
-
-    <h3 class="goal-heading">
-
-      <span>
-        저축 목표
-      </span>
-
-      <small>
-        ＋ 추가
-      </small>
-
-    </h3>
-
-    <div class="goal">
-
-      ◎　목표를 만들어보세요
-
-      <br>
-
-      <small>
-        목표 금액과 현재 금액을 기록해
-        진행률을 볼 수 있어요.
-      </small>
-
-    </div>
   `;
 }
 
