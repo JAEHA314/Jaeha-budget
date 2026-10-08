@@ -24,7 +24,6 @@
 
   --content-width: 1120px;
 
-  /* 캘린더 */
   --calendar-income: #dfeaf8;
   --calendar-expense: #f7e1e5;
   --calendar-saving: #e1f0e4;
@@ -35,8 +34,10 @@ html,
 body {
   margin: 0;
   min-height: 100%;
+
   background: var(--bg);
   color: var(--text);
+
   font-family:
     -apple-system,
     BlinkMacSystemFont,
@@ -44,8 +45,10 @@ body {
     "Apple SD Gothic Neo",
     "Noto Sans KR",
     sans-serif;
+
   font-size: 15px;
   line-height: 1.45;
+
   -webkit-font-smoothing: antialiased;
 }
 
@@ -89,10 +92,7 @@ svg {
 ========================================================= */
 
 .shell {
-  width: min(
-    calc(100% - 28px),
-    var(--content-width)
-  );
+  width: min(calc(100% - 28px), var(--content-width));
 
   margin: 0 auto;
   padding-bottom: 50px;
@@ -115,22 +115,26 @@ svg {
   justify-content: center;
 
   width: 100%;
-  height: 52px;
-  min-height: 52px;
+  height: 50px;
+  min-height: 50px;
 
-  padding: 0 48px;
+  padding: 0;
 
-  background: #ffffff;
+  background: #fff;
 }
 
 .nav-capsule {
   display: grid;
-  grid-template-columns: repeat(5, 56px);
+  grid-template-columns: repeat(5, 48px);
   align-items: center;
 
+  width: auto;
+  height: 34px;
+
+  margin: 0 auto;
   padding: 3px;
 
-  border-radius: 15px;
+  border-radius: 17px;
 
   background: #fafafa;
 
@@ -139,19 +143,22 @@ svg {
 }
 
 .nav-capsule button {
-  width: 56px;
-  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 48px;
+  height: 28px;
 
   padding: 0;
 
   border: 0;
-  border-radius: 15px;
+  border-radius: 14px;
 
   background: transparent;
-
   color: #555;
 
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 500;
 
   cursor: pointer;
@@ -160,6 +167,7 @@ svg {
 .nav-capsule button.on {
   background: #e1e1e1;
   color: #333;
+
   font-weight: 600;
 }
 
@@ -172,10 +180,11 @@ svg {
   display: grid;
   place-items: center;
 
-  width: 35px;
-  height: 35px;
+  width: 30px;
+  height: 30px;
 
-  padding: 0;
+  margin: 0;
+  padding: 0 0 1px;
 
   border: 0;
   border-radius: 50%;
@@ -183,7 +192,7 @@ svg {
   background: #f2f2f2;
   color: #555;
 
-  font-size: 21px;
+  font-size: 19px;
   font-weight: 300;
   line-height: 1;
 
@@ -273,7 +282,7 @@ svg {
 
 
 /* =========================================================
-   HOME
+   HOME - BALANCE
 ========================================================= */
 
 .balance {
@@ -289,6 +298,7 @@ svg {
   padding: 28px 22px;
 
   border-radius: 28px;
+
   background: #ededee;
 
   text-align: left;
@@ -298,6 +308,7 @@ svg {
   margin-bottom: 11px;
 
   color: #242424;
+
   font-size: 15px;
   font-weight: 500;
 }
@@ -324,8 +335,7 @@ svg {
     minmax(0, 1fr)
     minmax(0, 1.08fr);
 
-  grid-template-rows:
-    repeat(3, minmax(80px, auto));
+  grid-template-rows: repeat(3, 82px);
 
   gap: 9px;
 
@@ -333,10 +343,13 @@ svg {
   margin: 0;
 }
 
-.summary-card {
-  padding: 16px 20px;
+.home-summary .summary-card {
+  min-height: 0;
 
-  border-radius: 24px;
+  padding: 15px 18px;
+
+  border-radius: 23px;
+
   background: #ededee;
 }
 
@@ -355,73 +368,79 @@ svg {
   grid-row: 3;
 }
 
-.summary-investment {
+.home-summary .summary-investment {
   grid-column: 2;
   grid-row: 1 / 4;
 
   display: flex;
   flex-direction: column;
 
-  padding: 17px 22px;
+  min-height: 0;
+
+  padding: 16px 19px;
 }
 
-.summary-label {
+.home-summary .summary-label {
   display: block;
 
   color: #252525;
 
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 550;
   line-height: 1.2;
 }
 
-.summary-card:not(.summary-investment) > b {
+.home-summary .summary-card:not(.summary-investment) > b {
   display: block;
 
-  margin-top: 8px;
+  margin-top: 7px;
 
   color: #211b1b;
 
-  font-size: clamp(22px, 2.7vw, 30px);
+  font-size: 22px;
   font-weight: 750;
   line-height: 1;
 
   letter-spacing: -0.035em;
+
+  white-space: nowrap;
 }
 
-.investment-part {
+.home-summary .investment-part {
   display: flex;
-  flex-direction: column;
-
-  justify-content: center;
-
   flex: 1;
+  flex-direction: column;
+  justify-content: center;
 }
 
-.investment-part span {
-  margin-bottom: 8px;
+.home-summary .investment-part span {
+  margin-bottom: 7px;
 
   color: #333;
 
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 500;
 }
 
-.investment-part b {
+.home-summary .investment-part b {
   color: #211b1b;
 
-  font-size: clamp(21px, 2.7vw, 29px);
+  font-size: 22px;
   font-weight: 750;
   line-height: 1;
 
   letter-spacing: -0.035em;
+
+  white-space: nowrap;
 }
 
-.investment-divider {
+.home-summary .investment-divider {
+  flex: 0 0 1px;
+
   width: 100%;
   height: 1px;
 
-  margin: 2px 0;
+  margin: 0;
 
   background: #b9b9b9;
 }
@@ -464,8 +483,8 @@ svg {
   height: 38px;
 
   border-radius: 50%;
-  background: #f0f0f0;
 
+  background: #f0f0f0;
   color: #3f3f3f;
 }
 
@@ -486,6 +505,7 @@ svg {
   margin-bottom: 3px;
 
   color: #222;
+
   font-size: 14px;
   font-weight: 600;
 
@@ -499,6 +519,7 @@ svg {
   gap: 4px;
 
   color: #929292;
+
   font-size: 11px;
 }
 
@@ -508,7 +529,9 @@ svg {
 
 .repeat-mark {
   margin-left: 2px;
+
   color: #9a9a9a;
+
   font-size: 12px;
 }
 
@@ -521,6 +544,7 @@ svg {
   margin-top: 3px;
 
   color: #6f6f6f;
+
   font-size: 11px;
 
   white-space: nowrap;
@@ -531,6 +555,7 @@ svg {
   padding-left: 18px;
 
   color: #222;
+
   font-size: 14px;
   font-weight: 650;
 
@@ -544,6 +569,7 @@ svg {
   min-height: 180px;
 
   color: #a0a0a0;
+
   font-size: 13px;
 }
 
@@ -554,6 +580,7 @@ svg {
 
 .history-toolbar {
   width: 100%;
+
   margin-top: 3px;
   margin-bottom: 15px;
 }
@@ -577,6 +604,7 @@ svg {
   padding: 3px;
 
   border-radius: 9px;
+
   background: #f1f1f1;
 }
 
@@ -596,6 +624,7 @@ svg {
 .history-period-toggle button.on {
   background: #dcdcdc;
   color: #222;
+
   font-weight: 650;
 }
 
@@ -640,8 +669,8 @@ svg {
   border-radius: 50%;
 
   background: transparent;
-
   color: #555;
+
   font-size: 22px;
   font-weight: 300;
 
@@ -688,6 +717,7 @@ svg {
   padding: 3px;
 
   border-radius: 9px;
+
   background: #f1f1f1;
 }
 
@@ -707,6 +737,7 @@ svg {
 .tabs button.on {
   background: #dcdcdc;
   color: #222;
+
   font-weight: 650;
 }
 
@@ -717,6 +748,7 @@ svg {
 
 .category-filter-wrap {
   position: relative;
+
   justify-self: end;
 }
 
@@ -758,12 +790,14 @@ svg {
 
 .category-chevron {
   margin-left: auto;
+
   color: #999;
 }
 
 .category-menu {
   position: absolute;
   z-index: 100;
+
   top: calc(100% + 6px);
   right: 0;
 
@@ -778,6 +812,7 @@ svg {
   border-radius: 12px;
 
   background: rgba(255, 255, 255, 0.98);
+
   box-shadow:
     0 10px 35px rgba(0, 0, 0, 0.11);
 }
@@ -820,6 +855,7 @@ svg {
   border-bottom: 1px solid #ededed;
 
   color: #8c8c8c;
+
   font-size: 11px;
   text-align: right;
 }
@@ -851,6 +887,7 @@ svg {
   border-right: 1px solid #ececec;
 
   color: #747474;
+
   font-size: 12px;
   font-weight: 550;
 }
@@ -938,8 +975,8 @@ svg {
   padding: 0;
 
   border: 0;
-  background: transparent;
 
+  background: transparent;
   color: #555;
 
   font-size: 10px;
@@ -1004,10 +1041,13 @@ svg {
 
 .calendar-item {
   display: grid;
+
   grid-template-columns: minmax(0, 1fr) auto;
+
   grid-template-areas:
     "title amount"
     "category category";
+
   gap: 1px 5px;
 
   width: 100%;
@@ -1049,6 +1089,7 @@ svg {
   overflow: hidden;
 
   color: #333;
+
   font-size: 10.5px;
   font-weight: 650;
 
@@ -1060,6 +1101,7 @@ svg {
   grid-area: amount;
 
   color: #454545;
+
   font-size: 9.5px;
   font-weight: 650;
 
@@ -1072,6 +1114,7 @@ svg {
   overflow: hidden;
 
   color: rgba(50, 50, 50, 0.58);
+
   font-size: 8.5px;
 
   white-space: nowrap;
@@ -1083,9 +1126,10 @@ svg {
   padding: 0 3px;
 
   border: 0;
-  background: transparent;
 
+  background: transparent;
   color: #8a8a8a;
+
   font-size: 9.5px;
   font-weight: 550;
 
@@ -1099,6 +1143,7 @@ svg {
 
 .stats-page {
   width: 100%;
+
   padding-top: 5px;
 }
 
@@ -1113,6 +1158,7 @@ svg {
   padding: 3px;
 
   border-radius: 10px;
+
   background: #f1f1f1;
 }
 
@@ -1132,6 +1178,7 @@ svg {
 .statTabs button.on {
   background: #dcdcdc;
   color: #222;
+
   font-weight: 650;
 }
 
@@ -1146,6 +1193,7 @@ svg {
   padding: 3px;
 
   border-radius: 9px;
+
   background: #f1f1f1;
 }
 
@@ -1165,6 +1213,7 @@ svg {
 .stat-mode-tabs button.on {
   background: #dcdcdc;
   color: #222;
+
   font-weight: 650;
 }
 
@@ -1205,6 +1254,7 @@ svg {
 .year b {
   font-size: 15px;
   font-weight: 650;
+
   text-align: center;
 }
 
@@ -1218,6 +1268,7 @@ svg {
   padding: 21px 23px;
 
   border-radius: 16px;
+
   background: #f4f4f4;
 }
 
@@ -1225,6 +1276,7 @@ svg {
   margin-bottom: 15px;
 
   color: #555;
+
   font-size: 12px;
   font-weight: 600;
 }
@@ -1244,18 +1296,22 @@ svg {
 
 .stat-comparison-main small {
   color: #8d8d8d;
+
   font-size: 10px;
 }
 
 .stat-comparison-main strong {
   color: #222;
+
   font-size: 25px;
   font-weight: 650;
+
   letter-spacing: -0.035em;
 }
 
 .stat-difference {
   align-items: flex-end;
+
   text-align: right;
 }
 
@@ -1265,6 +1321,7 @@ svg {
 
 .stat-difference span {
   color: #888;
+
   font-size: 10px;
 }
 
@@ -1275,6 +1332,7 @@ svg {
   border-top: 1px solid #e2e2e2;
 
   color: #929292;
+
   font-size: 10px;
 }
 
@@ -1296,6 +1354,7 @@ svg {
   margin: 0 0 18px;
 
   color: #333;
+
   font-size: 14px;
   font-weight: 650;
 }
@@ -1355,9 +1414,11 @@ svg {
   display: block;
 
   height: 29px;
+
   padding-top: 7px;
 
   color: #858585;
+
   font-size: 9px;
 }
 
@@ -1376,6 +1437,7 @@ svg {
   gap: 5px;
 
   color: #777;
+
   font-size: 9.5px;
 }
 
@@ -1428,12 +1490,14 @@ svg {
 
 .category-stat-head b {
   color: #444;
+
   font-size: 11px;
   font-weight: 600;
 }
 
 .category-stat-head strong {
   color: #333;
+
   font-size: 11px;
   font-weight: 650;
 }
@@ -1445,11 +1509,13 @@ svg {
   height: 8px;
 
   border-radius: 999px;
+
   background: #f0f0f0;
 }
 
 .category-stat-track i {
   display: block;
+
   height: 100%;
 
   border-radius: inherit;
@@ -1461,6 +1527,7 @@ svg {
   margin-top: 5px;
 
   color: #999;
+
   font-size: 9px;
   text-align: right;
 }
@@ -1492,6 +1559,7 @@ svg {
   gap: 8px;
 
   color: #555;
+
   font-size: 11px;
 }
 
@@ -1505,6 +1573,7 @@ svg {
 
 .stat-change-values small {
   color: #999;
+
   font-size: 9px;
 }
 
@@ -1512,6 +1581,7 @@ svg {
   min-width: 90px;
 
   color: #444;
+
   font-size: 11px;
   font-weight: 650;
 }
@@ -1519,7 +1589,6 @@ svg {
 
 /* =========================================================
    STAT CATEGORY COLORS
-   통계는 항목 구분이 필요하므로 색상 사용
 ========================================================= */
 
 .stat-color-0 {
@@ -1577,16 +1646,19 @@ svg {
 
 .settings {
   width: min(100%, 680px);
+
   margin: 20px auto 0;
 }
 
 .settings h3 {
   margin: 0 0 8px;
+
   font-size: 15px;
 }
 
 .settings p {
   color: #777;
+
   font-size: 12px;
 }
 
@@ -1596,6 +1668,7 @@ svg {
   margin: 28px 0;
 
   border: 0;
+
   background: #ededed;
 }
 
@@ -1668,6 +1741,7 @@ svg {
   padding: 24px;
 
   background: rgba(0, 0, 0, 0.2);
+
   backdrop-filter: blur(3px);
   -webkit-backdrop-filter: blur(3px);
 }
@@ -1683,6 +1757,7 @@ svg {
   border-radius: 18px;
 
   background: #fff;
+
   box-shadow:
     0 24px 70px rgba(0, 0, 0, 0.2);
 }
@@ -1700,6 +1775,7 @@ svg {
   margin: 15px 0 6px;
 
   color: #555;
+
   font-size: 11px;
   font-weight: 550;
 }
@@ -1721,6 +1797,7 @@ svg {
 .sheet input,
 .sheet select {
   height: 39px;
+
   padding: 0 11px;
 }
 
@@ -1736,6 +1813,7 @@ svg {
 .sheet select:focus,
 .sheet textarea:focus {
   border-color: #aaa;
+
   outline: none;
 }
 
@@ -1748,6 +1826,7 @@ svg {
   padding: 3px;
 
   border-radius: 9px;
+
   background: #f0f0f0;
 }
 
@@ -1766,6 +1845,7 @@ svg {
 .kind button.on {
   background: #d9d9d9;
   color: #222;
+
   font-weight: 650;
 }
 
@@ -1773,9 +1853,11 @@ svg {
   display: block;
 
   min-height: 17px;
+
   margin-top: 4px;
 
   color: #777;
+
   font-size: 11px;
   text-align: right;
 }
@@ -1783,6 +1865,7 @@ svg {
 #msg,
 #repeatMsg {
   color: #a34d4d;
+
   font-size: 11px;
 }
 
@@ -1790,11 +1873,13 @@ svg {
   margin: -13px 0 20px;
 
   color: #777;
+
   font-size: 12px;
 }
 
 .repeat-help {
   color: #999;
+
   font-size: 10px;
 }
 
@@ -1836,6 +1921,7 @@ svg {
   margin: 13px 0 6px;
 
   color: #555;
+
   font-size: 11px;
 }
 
@@ -1865,11 +1951,13 @@ svg {
 
   .history-top-row {
     grid-template-columns: 150px minmax(180px, 1fr) 245px;
+
     gap: 10px;
   }
 
   .history-bottom-row {
     grid-template-columns: 150px minmax(0, 1fr) 160px;
+
     gap: 10px;
   }
 
@@ -1883,11 +1971,13 @@ svg {
 
   .day {
     min-height: 160px;
+
     padding: 6px;
   }
 
   .calendar-item {
     grid-template-columns: 1fr;
+
     grid-template-areas:
       "title"
       "amount";
@@ -1905,143 +1995,126 @@ svg {
 
 @media (max-width: 700px) {
   .shell {
-    width: calc(100% - 20px);
+    width: 100%;
+
+    padding-right: 20px;
     padding-bottom: 50px;
+    padding-left: 20px;
   }
 
-  /* 메뉴의 다섯 칸 폭은 모바일에서도 동일 */
-.nav {
-  position: relative;
+  /* 메뉴는 + 버튼과 관계없이 화면 중앙 */
+  .nav {
+    width: 100%;
 
-  display: flex;
-  align-items: center;
-  justify-content: center;
+    height: 50px;
+    min-height: 50px;
 
-  width: 100%;
-  height: 54px;
-  min-height: 54px;
+    padding: 0;
+  }
 
-  padding: 0 46px;
+  .nav-capsule {
+    grid-template-columns: repeat(5, 44px);
 
-  background: #fff;
-}
+    width: auto;
+    height: 33px;
 
-.nav-capsule {
-  display: grid;
-  grid-template-columns: repeat(5, 56px);
-  align-items: center;
+    margin: 0 auto;
+    padding: 3px;
 
-  height: 36px;
-  padding: 3px;
+    border-radius: 17px;
+  }
 
-  border-radius: 18px;
+  .nav-capsule button {
+    width: 44px;
+    height: 27px;
 
-  background: #fafafa;
+    border-radius: 14px;
 
-  box-shadow:
-    0 8px 25px rgba(0, 0, 0, 0.035);
-}
+    font-size: 10px;
+  }
 
-.nav-capsule button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  .add {
+    right: 0;
 
-  width: 56px;
-  height: 30px;
+    width: 30px;
+    height: 30px;
 
-  padding: 0;
+    padding-bottom: 1px;
 
-  border: 0;
-  border-radius: 15px;
+    font-size: 19px;
+  }
 
-  background: transparent;
-  color: #555;
-
-  font-size: 11px;
-  font-weight: 500;
-
-  cursor: pointer;
-}
-
-.nav-capsule button.on {
-  background: #e1e1e1;
-  color: #333;
-  font-weight: 600;
-}
-
-.add {
-  position: absolute;
-
-  top: 50%;
-  right: 0;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  width: 36px;
-  height: 36px;
-
-  margin: 0;
-  padding: 0 0 2px;
-
-  border: 0;
-  border-radius: 50%;
-
-  background: #f2f2f2;
-  color: #555;
-
-  font-size: 22px;
-  font-weight: 300;
-  line-height: 1;
-
-  transform: translateY(-50%);
-
-  cursor: pointer;
-}
-
+  /* 월 이동 */
   .month {
-    margin-bottom: 20px;
+    margin-top: 15px;
+    margin-bottom: 15px;
   }
 
+  /* 생활수지 */
   .balance {
-    min-height: 125px;
-    padding: 23px;
+    min-height: 132px;
+
+    margin-bottom: 10px;
+    padding: 23px 20px;
+
+    border-radius: 25px;
+  }
+
+  .balance span {
+    margin-bottom: 9px;
+
+    font-size: 13px;
   }
 
   .balance b {
-    font-size: 31px;
+    font-size: 34px;
   }
 
-  .cards {
+  /* 홈 요약 */
+  .home-summary {
+    grid-template-columns:
+      minmax(0, 1fr)
+      minmax(0, 1.08fr);
+
+    grid-template-rows: repeat(3, 78px);
+
     gap: 9px;
   }
 
-  .cards article {
-    min-height: 112px;
-    padding: 17px;
+  .home-summary .summary-card {
+    min-height: 0;
+
+    padding: 13px 15px;
+
+    border-radius: 21px;
   }
 
-  .cards article > b {
-    font-size: 18px;
+  .home-summary .summary-investment {
+    padding: 14px 16px;
   }
 
-  .invest {
-    grid-template-columns: 1fr;
-    gap: 6px;
+  .home-summary .summary-label {
+    font-size: 12px;
   }
 
-  .invest small + small {
-    padding-left: 0;
-    padding-top: 6px;
+  .home-summary .summary-card:not(.summary-investment) > b {
+    margin-top: 7px;
 
-    border-left: 0;
-    border-top: 1px solid #dedede;
+    font-size: 19px;
+
+    letter-spacing: -0.035em;
   }
 
-  .invest b {
-    font-size: 15px;
+  .home-summary .investment-part span {
+    margin-bottom: 6px;
+
+    font-size: 9px;
+  }
+
+  .home-summary .investment-part b {
+    font-size: 19px;
+
+    letter-spacing: -0.035em;
   }
 
   /* 내역 */
@@ -2049,12 +2122,14 @@ svg {
   .history-bottom-row {
     display: flex;
     flex-wrap: wrap;
+
     gap: 9px;
   }
 
   .history-period-toggle {
-    width: 135px;
     flex: 0 0 135px;
+
+    width: 135px;
   }
 
   .history-search-wrap {
@@ -2094,14 +2169,15 @@ svg {
   }
 
   .category-menu {
-    left: 0;
     right: auto;
+    left: 0;
 
     width: 100%;
   }
 
   .row {
     grid-template-columns: 38px minmax(0, 1fr) auto;
+
     gap: 10px;
   }
 
@@ -2112,12 +2188,11 @@ svg {
 
   .row-amount {
     padding-left: 8px;
+
     font-size: 12px;
   }
 
-  /* 캘린더:
-     휴대폰에서는 작게 압축하지 않고
-     가로 스크롤해서 글씨 크기를 유지 */
+  /* 캘린더 */
   .week,
   .calendar {
     min-width: 840px;
@@ -2129,11 +2204,13 @@ svg {
 
   .day {
     min-height: 165px;
+
     padding: 7px;
   }
 
   .calendar-item {
     grid-template-columns: minmax(0, 1fr) auto;
+
     grid-template-areas:
       "title amount"
       "category category";
@@ -2145,6 +2222,7 @@ svg {
 
   main:has(.calendar) {
     overflow-x: auto;
+
     padding-bottom: 8px;
   }
 
@@ -2168,49 +2246,10 @@ svg {
 
 
 /* =========================================================
-   VERY SMALL MOBILE
+   SMALL MOBILE
 ========================================================= */
 
 @media (max-width: 430px) {
-  .nav {
-    padding-right: 43px;
-  }
-
-  .nav-capsule {
-    padding: 3px;
-  }
-
-  .nav-capsule button {
-    font-size: 10px;
-  }
-
-  .add {
-    width: 32px;
-    height: 32px;
-  }
-
-  .cards {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .summary-label {
-    gap: 6px;
-    font-size: 11px;
-  }
-
-  .summary-icon {
-    width: 17px;
-    height: 17px;
-  }
-
-  .cards article {
-    padding: 14px;
-  }
-
-  .cards article > b {
-    font-size: 16px;
-  }
-
   .row-note {
     max-width: 180px;
   }
@@ -2228,427 +2267,15 @@ svg {
   }
 }
 
-@media (max-width: 640px) {
-  .shell {
-    width: 100%;
-
-    padding-left: 20px;
-    padding-right: 20px;
-    padding-bottom: 36px;
-  }
-
-  .nav {
-    width: calc(100% + 40px);
-
-    margin-left: -20px;
-    margin-right: -20px;
-
-    padding-left: 20px;
-    padding-right: 20px;
-  }
-
-  .nav-capsule {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-
-    width: calc(100% - 50px);
-    max-width: 310px;
-  }
-
-  .nav-capsule button {
-    width: 100%;
-  }
-
-  .add {
-    right: 20px;
-  }
-
-  .month {
-    margin-top: 15px;
-    margin-bottom: 15px;
-  }
-
-  .balance {
-    min-height: 132px;
-
-    padding: 23px 20px;
-
-    border-radius: 25px;
-  }
-
-  .balance span {
-    font-size: 14px;
-  }
-
-  .balance b {
-    font-size: 36px;
-  }
-
-  .home-summary {
-    grid-template-columns:
-      minmax(0, 0.96fr)
-      minmax(0, 1.04fr);
-
-    grid-template-rows: repeat(3, 78px);
-
-    gap: 8px;
-  }
-
-  .summary-card {
-    padding: 14px 16px;
-
-    border-radius: 22px;
-  }
-
-  .summary-label {
-    font-size: 13px;
-  }
-
-  .summary-card:not(.summary-investment) > b {
-    margin-top: 8px;
-
-    font-size: clamp(19px, 6.2vw, 25px);
-  }
-
-  .summary-investment {
-    padding: 15px 17px;
-  }
-
-  .investment-part span {
-    margin-bottom: 6px;
-
-    font-size: 10px;
-  }
-
-  .investment-part b {
-    font-size: clamp(18px, 5.7vw, 24px);
-  }
-}
 
 /* =========================================================
-   HOME / NAV FINAL OVERRIDE
+   VERY SMALL MOBILE
 ========================================================= */
 
-/* 상단 메뉴를 조금 더 컴팩트하게 */
-.nav {
-  height: 50px;
-  min-height: 50px;
-}
-
-.nav-capsule {
-  grid-template-columns: repeat(5, 48px);
-  width: auto;
-  height: 34px;
-  padding: 3px;
-  border-radius: 17px;
-}
-
-.nav-capsule button {
-  width: 48px;
-  height: 28px;
-  border-radius: 14px;
-  font-size: 10px;
-}
-
-
-/* 홈 요약 카드 */
-.home-summary {
-  display: grid;
-
-  grid-template-columns:
-    minmax(0, 1fr)
-    minmax(0, 1.08fr);
-
-  /*
-    왼쪽 3개 카드 + 2개의 gap을 합친 높이와
-    오른쪽 투자 카드 높이가 정확히 같아짐
-  */
-  grid-template-rows: repeat(3, 82px);
-
-  gap: 9px;
-
-  width: 100%;
-  margin: 0;
-}
-
-.home-summary .summary-card {
-  min-height: 0;
-  height: auto;
-
-  padding: 15px 18px;
-
-  border-radius: 23px;
-  background: #ededee;
-}
-
-.home-summary .summary-income {
-  grid-column: 1;
-  grid-row: 1;
-}
-
-.home-summary .summary-expense {
-  grid-column: 1;
-  grid-row: 2;
-}
-
-.home-summary .summary-saving {
-  grid-column: 1;
-  grid-row: 3;
-}
-
-.home-summary .summary-investment {
-  grid-column: 2;
-  grid-row: 1 / 4;
-
-  display: flex;
-  flex-direction: column;
-
-  min-height: 0;
-  height: auto;
-
-  padding: 16px 19px;
-}
-
-.home-summary .summary-label {
-  font-size: 13px;
-  line-height: 1.2;
-}
-
-/* 수입 / 지출 / 저축 금액은 조금 작게 */
-.home-summary
-.summary-card:not(.summary-investment) > b {
-  margin-top: 7px;
-
-  font-size: 22px;
-  line-height: 1;
-
-  white-space: nowrap;
-}
-
-
-/* 투자 내부 */
-.home-summary .investment-part {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.home-summary .investment-part span {
-  margin-bottom: 7px;
-
-  font-size: 10px;
-}
-
-.home-summary .investment-part b {
-  font-size: 22px;
-  line-height: 1;
-
-  white-space: nowrap;
-}
-
-.home-summary .investment-divider {
-  flex: 0 0 1px;
-
-  width: 100%;
-  height: 1px;
-
-  margin: 0;
-
-  background: #b9b9b9;
-}
-
-
-/* =========================================================
-   MOBILE FINAL OVERRIDE
-========================================================= */
-
-@media (max-width: 700px) {
-
-  /*
-    화면 끝에 너무 붙지 않게.
-    width 계산 대신 padding 방식으로 통일.
-  */
-  .shell {
-    width: 100%;
-    padding-left: 20px;
-    padding-right: 20px;
-    padding-bottom: 50px;
-  }
-
-
-  /* 메뉴 + 버튼 */
-  .nav {
-    width: 100%;
-
-    height: 50px;
-    min-height: 50px;
-
-    padding-left: 0;
-    padding-right: 42px;
-  }
-
-  .nav-capsule {
-    grid-template-columns: repeat(5, 44px);
-
-    width: auto;
-    height: 33px;
-
-    padding: 3px;
-
-    border-radius: 17px;
-  }
-
-  .nav-capsule button {
-    width: 44px;
-    height: 27px;
-
-    border-radius: 14px;
-
-    font-size: 10px;
-  }
-
-  .add {
-    top: 50%;
-    right: 0;
-
-    width: 34px;
-    height: 34px;
-
-    transform: translateY(-50%);
-  }
-
-
-  /* 월 선택 */
-  .month {
-    margin-top: 15px;
-    margin-bottom: 15px;
-  }
-
-
-  /* 생활수지 */
-  .balance {
-    min-height: 132px;
-
-    margin-bottom: 10px;
-    padding: 23px 20px;
-
-    border-radius: 25px;
-  }
-
-  .balance span {
-    margin-bottom: 9px;
-
-    font-size: 13px;
-  }
-
-  .balance b {
-    font-size: 34px;
-  }
-
-
-  /*
-    핵심:
-    예전 .cards article 모바일 규칙을 확실히 덮어씀.
-  */
-  .home-summary {
-    display: grid;
-
-    grid-template-columns:
-      minmax(0, 1fr)
-      minmax(0, 1.08fr);
-
-    grid-template-rows:
-      repeat(3, 78px);
-
-    gap: 9px;
-
-    width: 100%;
-  }
-
-  .home-summary .summary-card {
-    min-height: 0;
-    height: auto;
-
-    padding: 13px 15px;
-
-    border-radius: 21px;
-  }
-
-  .home-summary .summary-income {
-    grid-column: 1;
-    grid-row: 1;
-  }
-
-  .home-summary .summary-expense {
-    grid-column: 1;
-    grid-row: 2;
-  }
-
-  .home-summary .summary-saving {
-    grid-column: 1;
-    grid-row: 3;
-  }
-
-  .home-summary .summary-investment {
-    grid-column: 2;
-    grid-row: 1 / 4;
-
-    min-height: 0;
-    height: auto;
-
-    padding: 14px 16px;
-  }
-
-
-  /* 카드 제목 */
-  .home-summary .summary-label {
-    font-size: 12px;
-  }
-
-
-  /* 수입 / 지출 / 저축 숫자 */
-  .home-summary
-  .summary-card:not(.summary-investment) > b {
-    margin-top: 7px;
-
-    font-size: 19px;
-    line-height: 1;
-
-    letter-spacing: -0.035em;
-
-    white-space: nowrap;
-  }
-
-
-  /* 투자 */
-  .home-summary .investment-part span {
-    margin-bottom: 6px;
-
-    font-size: 9px;
-  }
-
-  .home-summary .investment-part b {
-    font-size: 19px;
-
-    letter-spacing: -0.035em;
-
-    white-space: nowrap;
-  }
-}
-
-
-/*
-  아주 작은 폰에서도 금액이 카드 밖으로 나가지 않도록
-*/
 @media (max-width: 370px) {
-
   .shell {
-    padding-left: 16px;
     padding-right: 16px;
-  }
-
-  .nav {
-    padding-right: 38px;
+    padding-left: 16px;
   }
 
   .nav-capsule {
@@ -2657,12 +2284,15 @@ svg {
 
   .nav-capsule button {
     width: 40px;
+
     font-size: 9.5px;
   }
 
   .add {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
+
+    font-size: 18px;
   }
 
   .home-summary {
@@ -2671,8 +2301,7 @@ svg {
       minmax(0, 1.05fr);
   }
 
-  .home-summary
-  .summary-card:not(.summary-investment) > b,
+  .home-summary .summary-card:not(.summary-investment) > b,
   .home-summary .investment-part b {
     font-size: 17px;
   }
