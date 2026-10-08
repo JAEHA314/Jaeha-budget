@@ -114,10 +114,6 @@ svg {
   align-items: center;
   justify-content: center;
 
-  /*
-    shell의 좌우 14px 여백을 다시 확장해서
-    앱 전체 폭을 기준으로 중앙 정렬
-  */
   width: calc(100% + 28px);
 
   margin-left: -14px;
@@ -130,6 +126,7 @@ svg {
 
   background: #fff;
 }
+
 .nav-capsule {
   display: grid;
   grid-template-columns: repeat(5, 48px);
@@ -182,7 +179,7 @@ svg {
   position: absolute;
 
   top: 50%;
-  right: 0;
+  right: 14px;
 
   display: grid;
   place-items: center;
@@ -2009,9 +2006,16 @@ svg {
     padding-left: 20px;
   }
 
-  /* 메뉴는 + 버튼과 관계없이 화면 중앙 */
+  /*
+    본문은 좌우 20px 여백을 유지하지만,
+    상단 nav만 그 여백을 다시 벗어나
+    화면 전체 폭을 기준으로 정렬한다.
+  */
   .nav {
-    width: 100%;
+    width: calc(100% + 40px);
+
+    margin-left: -20px;
+    margin-right: -20px;
 
     height: 50px;
     min-height: 50px;
@@ -2019,6 +2023,10 @@ svg {
     padding: 0;
   }
 
+  /*
+    + 버튼과 관계없이 메뉴 묶음 자체가
+    전체 화면의 정확한 중앙에 위치한다.
+  */
   .nav-capsule {
     grid-template-columns: repeat(5, 44px);
 
@@ -2040,8 +2048,12 @@ svg {
     font-size: 10px;
   }
 
+  /*
+    + 버튼은 absolute라서
+    nav-capsule의 중앙 정렬에 영향을 주지 않는다.
+  */
   .add {
-    right: 0;
+    right: 20px;
 
     width: 30px;
     height: 30px;
@@ -2285,6 +2297,17 @@ svg {
     padding-left: 16px;
   }
 
+  /*
+    shell 여백이 16px로 바뀌므로
+    nav 확장값도 이에 맞춰 조정
+  */
+  .nav {
+    width: calc(100% + 32px);
+
+    margin-left: -16px;
+    margin-right: -16px;
+  }
+
   .nav-capsule {
     grid-template-columns: repeat(5, 40px);
   }
@@ -2296,6 +2319,8 @@ svg {
   }
 
   .add {
+    right: 16px;
+
     width: 28px;
     height: 28px;
 
