@@ -2323,3 +2323,357 @@ svg {
     font-size: clamp(18px, 5.7vw, 24px);
   }
 }
+
+/* =========================================================
+   HOME / NAV FINAL OVERRIDE
+========================================================= */
+
+/* 상단 메뉴를 조금 더 컴팩트하게 */
+.nav {
+  height: 50px;
+  min-height: 50px;
+}
+
+.nav-capsule {
+  grid-template-columns: repeat(5, 48px);
+  width: auto;
+  height: 34px;
+  padding: 3px;
+  border-radius: 17px;
+}
+
+.nav-capsule button {
+  width: 48px;
+  height: 28px;
+  border-radius: 14px;
+  font-size: 10px;
+}
+
+
+/* 홈 요약 카드 */
+.home-summary {
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(0, 1.08fr);
+
+  /*
+    왼쪽 3개 카드 + 2개의 gap을 합친 높이와
+    오른쪽 투자 카드 높이가 정확히 같아짐
+  */
+  grid-template-rows: repeat(3, 82px);
+
+  gap: 9px;
+
+  width: 100%;
+  margin: 0;
+}
+
+.home-summary .summary-card {
+  min-height: 0;
+  height: auto;
+
+  padding: 15px 18px;
+
+  border-radius: 23px;
+  background: #ededee;
+}
+
+.home-summary .summary-income {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.home-summary .summary-expense {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.home-summary .summary-saving {
+  grid-column: 1;
+  grid-row: 3;
+}
+
+.home-summary .summary-investment {
+  grid-column: 2;
+  grid-row: 1 / 4;
+
+  display: flex;
+  flex-direction: column;
+
+  min-height: 0;
+  height: auto;
+
+  padding: 16px 19px;
+}
+
+.home-summary .summary-label {
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+/* 수입 / 지출 / 저축 금액은 조금 작게 */
+.home-summary
+.summary-card:not(.summary-investment) > b {
+  margin-top: 7px;
+
+  font-size: 22px;
+  line-height: 1;
+
+  white-space: nowrap;
+}
+
+
+/* 투자 내부 */
+.home-summary .investment-part {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.home-summary .investment-part span {
+  margin-bottom: 7px;
+
+  font-size: 10px;
+}
+
+.home-summary .investment-part b {
+  font-size: 22px;
+  line-height: 1;
+
+  white-space: nowrap;
+}
+
+.home-summary .investment-divider {
+  flex: 0 0 1px;
+
+  width: 100%;
+  height: 1px;
+
+  margin: 0;
+
+  background: #b9b9b9;
+}
+
+
+/* =========================================================
+   MOBILE FINAL OVERRIDE
+========================================================= */
+
+@media (max-width: 700px) {
+
+  /*
+    화면 끝에 너무 붙지 않게.
+    width 계산 대신 padding 방식으로 통일.
+  */
+  .shell {
+    width: 100%;
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-bottom: 50px;
+  }
+
+
+  /* 메뉴 + 버튼 */
+  .nav {
+    width: 100%;
+
+    height: 50px;
+    min-height: 50px;
+
+    padding-left: 0;
+    padding-right: 42px;
+  }
+
+  .nav-capsule {
+    grid-template-columns: repeat(5, 44px);
+
+    width: auto;
+    height: 33px;
+
+    padding: 3px;
+
+    border-radius: 17px;
+  }
+
+  .nav-capsule button {
+    width: 44px;
+    height: 27px;
+
+    border-radius: 14px;
+
+    font-size: 10px;
+  }
+
+  .add {
+    top: 50%;
+    right: 0;
+
+    width: 34px;
+    height: 34px;
+
+    transform: translateY(-50%);
+  }
+
+
+  /* 월 선택 */
+  .month {
+    margin-top: 15px;
+    margin-bottom: 15px;
+  }
+
+
+  /* 생활수지 */
+  .balance {
+    min-height: 132px;
+
+    margin-bottom: 10px;
+    padding: 23px 20px;
+
+    border-radius: 25px;
+  }
+
+  .balance span {
+    margin-bottom: 9px;
+
+    font-size: 13px;
+  }
+
+  .balance b {
+    font-size: 34px;
+  }
+
+
+  /*
+    핵심:
+    예전 .cards article 모바일 규칙을 확실히 덮어씀.
+  */
+  .home-summary {
+    display: grid;
+
+    grid-template-columns:
+      minmax(0, 1fr)
+      minmax(0, 1.08fr);
+
+    grid-template-rows:
+      repeat(3, 78px);
+
+    gap: 9px;
+
+    width: 100%;
+  }
+
+  .home-summary .summary-card {
+    min-height: 0;
+    height: auto;
+
+    padding: 13px 15px;
+
+    border-radius: 21px;
+  }
+
+  .home-summary .summary-income {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .home-summary .summary-expense {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .home-summary .summary-saving {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  .home-summary .summary-investment {
+    grid-column: 2;
+    grid-row: 1 / 4;
+
+    min-height: 0;
+    height: auto;
+
+    padding: 14px 16px;
+  }
+
+
+  /* 카드 제목 */
+  .home-summary .summary-label {
+    font-size: 12px;
+  }
+
+
+  /* 수입 / 지출 / 저축 숫자 */
+  .home-summary
+  .summary-card:not(.summary-investment) > b {
+    margin-top: 7px;
+
+    font-size: 19px;
+    line-height: 1;
+
+    letter-spacing: -0.035em;
+
+    white-space: nowrap;
+  }
+
+
+  /* 투자 */
+  .home-summary .investment-part span {
+    margin-bottom: 6px;
+
+    font-size: 9px;
+  }
+
+  .home-summary .investment-part b {
+    font-size: 19px;
+
+    letter-spacing: -0.035em;
+
+    white-space: nowrap;
+  }
+}
+
+
+/*
+  아주 작은 폰에서도 금액이 카드 밖으로 나가지 않도록
+*/
+@media (max-width: 370px) {
+
+  .shell {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .nav {
+    padding-right: 38px;
+  }
+
+  .nav-capsule {
+    grid-template-columns: repeat(5, 40px);
+  }
+
+  .nav-capsule button {
+    width: 40px;
+    font-size: 9.5px;
+  }
+
+  .add {
+    width: 32px;
+    height: 32px;
+  }
+
+  .home-summary {
+    grid-template-columns:
+      minmax(0, 1fr)
+      minmax(0, 1.05fr);
+  }
+
+  .home-summary
+  .summary-card:not(.summary-investment) > b,
+  .home-summary .investment-part b {
+    font-size: 17px;
+  }
+}
