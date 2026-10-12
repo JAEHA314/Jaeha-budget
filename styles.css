@@ -2788,3 +2788,79 @@ svg {
     font-size: 6.5px;
   }
 }
+
+/* =========================================================
+   STATISTICS - MOBILE MONTH GROUPS / DRILLDOWN / CASHFLOW
+========================================================= */
+
+.stat-month-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.stat-month-group {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  align-items: stretch;
+  gap: 10px;
+  width: 100%;
+  min-height: 32px;
+  padding: 5px 0;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.stat-month-group:hover { background: #fafafa; }
+.stat-month-label { align-self: center; color: #777; font-size: 10px; font-weight: 600; text-align: right; }
+.stat-month-bars { display: flex; flex-direction: column; justify-content: center; gap: 3px; min-width: 0; }
+.stat-category-line { display: block; width: 100%; height: 6px; border-radius: 999px; background: #f2f2f3; overflow: hidden; }
+.stat-category-bar { display: block; height: 100%; min-width: 2px; border-radius: inherit; }
+.stat-month-empty { color: #bbb; font-size: 10px; }
+
+.cashflow-chart { display: flex; flex-direction: column; gap: 10px; width: 100%; padding: 5px 0; }
+.cashflow-row { display: grid; grid-template-columns: 38px minmax(0, 1fr) 58px; align-items: center; gap: 8px; min-height: 24px; }
+.cashflow-month { color: #777; font-size: 10px; font-weight: 600; text-align: right; }
+.cashflow-plot { position: relative; height: 14px; min-width: 0; }
+.cashflow-zero { position: absolute; top: -2px; bottom: -2px; left: 50%; width: 1px; background: #d7d7d9; transform: translateX(-.5px); }
+.cashflow-bar { position: absolute; top: 3px; height: 8px; border-radius: 4px; }
+.cashflow-bar.positive { left: 50%; background: var(--positive); }
+.cashflow-bar.negative { right: 50%; background: var(--negative); }
+.cashflow-value { overflow: hidden; color: #999; font-size: 9px; font-weight: 650; white-space: nowrap; text-overflow: ellipsis; }
+.cashflow-value.positive { color: var(--positive); }
+.cashflow-value.negative { color: var(--negative); }
+
+.stat-back { margin: 0 0 15px; padding: 0; border: 0; background: transparent; color: #777; font-size: 11px; cursor: pointer; }
+.stat-detail-summary { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 24px; padding: 18px 19px; border-radius: 18px; background: #f1f1f2; }
+.stat-detail-summary span { color: #555; font-size: 12px; font-weight: 550; }
+.stat-detail-summary strong { color: #222; font-size: 18px; font-weight: 750; letter-spacing: -.03em; white-space: nowrap; }
+.stat-detail-list { display: flex; flex-direction: column; gap: 17px; }
+.stat-detail-row { display: block; width: 100%; padding: 0; border: 0; background: transparent; text-align: left; cursor: pointer; }
+.stat-detail-head { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-bottom: 7px; }
+.stat-detail-head > span { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.stat-detail-head b { overflow: hidden; color: #444; font-size: 11px; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; }
+.stat-detail-head strong { flex: 0 0 auto; color: #333; font-size: 11px; font-weight: 650; white-space: nowrap; }
+.stat-detail-track { display: block; overflow: hidden; width: 100%; height: 9px; border-radius: 999px; background: #f0f0f0; }
+.stat-detail-track i { display: block; height: 100%; border-radius: inherit; }
+.stat-detail-row:hover .stat-detail-track { background: #e9e9e9; }
+
+@media (max-width: 700px) {
+  .stat-month-group { grid-template-columns: 28px minmax(0, 1fr); gap: 7px; padding: 4px 0; }
+  .stat-month-label { font-size: 8.5px; }
+  .stat-month-bars { gap: 2.5px; }
+  .stat-category-line { height: 5px; }
+  .cashflow-row { grid-template-columns: 27px minmax(0, 1fr) 52px; gap: 6px; }
+  .cashflow-month { font-size: 8.5px; }
+  .cashflow-value { font-size: 8px; }
+  .stat-detail-summary { padding: 16px; border-radius: 16px; }
+  .stat-detail-summary strong { font-size: 16px; }
+}
+
+@media (max-width: 370px) {
+  .cashflow-row { grid-template-columns: 24px minmax(0, 1fr) 46px; gap: 4px; }
+  .cashflow-value { font-size: 7px; }
+}
