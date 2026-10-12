@@ -2792,7 +2792,15 @@ function monthlyStats(year) {
         월별 ${statKind}
       </h2>
 
-      <div class="stat-month-chart">
+      <div
+        class="stat-month-chart"
+        style="--stat-category-count:${
+          Math.max(
+            1,
+            activeCategories.length
+          )
+        }"
+      >
 
         ${monthData.map(
           (
@@ -2849,19 +2857,25 @@ function monthlyStats(year) {
                                 stat-month-bar-line
                               "
                             >
-                              <i
+                              <span
                                 class="
-                                  stat-month-bar
-                                  stat-color-${
+                                  stat-month-bar-space
+                                "
+                              >
+                                <i
+                                  class="
+                                    stat-month-bar
+                                    stat-color-${
                                     colors.get(
                                       category
                                     )
                                   }
                                 "
-                                style="
-                                  --bar-end:${width}%; width:${width}%
-                                "
-                              ></i>
+                                  style="
+                                    width:${width}%
+                                  "
+                                ></i>
+                              </span>
 
                               ${
                                 absolute
@@ -3392,6 +3406,29 @@ function lifestyleMonthlyStats(
         월별 생활수지
       </h2>
 
+
+      <div
+        class="
+          annual-cashflow-summary
+        "
+      >
+        <span>
+          연간 생활수지
+        </span>
+
+        <strong
+          class="${
+            annual > 0
+              ? 'positive'
+              : annual < 0
+                ? 'negative'
+                : 'zero'
+          }"
+        >
+          ${signedMoney(annual)}
+        </strong>
+      </div>
+
       <div class="cashflow-chart">
 
         ${values.map(
@@ -3472,27 +3509,6 @@ function lifestyleMonthlyStats(
 
       </div>
 
-      <div
-        class="
-          annual-cashflow-summary
-        "
-      >
-        <span>
-          ${year}년 연간 생활수지
-        </span>
-
-        <strong
-          class="${
-            annual > 0
-              ? 'positive'
-              : annual < 0
-                ? 'negative'
-                : 'zero'
-          }"
-        >
-          ${signedMoney(annual)}
-        </strong>
-      </div>
 
     </section>
   `;
