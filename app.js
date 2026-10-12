@@ -1,15 +1,1718 @@
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+/* =========================================================
+   기본 설정
+========================================================= */
+
+const cfg = window.JAEHA_BUDGET_CONFIG || {};
+const root = document.querySelector('#app');
+
+if (!cfg.supabaseUrl || !cfg.supabasePublishableKey) {
+  root.innerHTML = 'Supabase config 오류';
+  throw new Error('config');
+}
+
+const db = createClient(
+  cfg.supabaseUrl,
+  cfg.supabasePublishableKey,
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true
+    }
+  }
+);
+
+let user = null;
+let tx = [];
+
+let settings = {
+  custom_categories: [],
+  savings_goals: []
+};
+
+let month = new Date();
+month.setHours(12, 0, 0, 0);
+
+let view = '홈';
+
+let historyMode = 'month';
+let historyDate = new Date();
+historyDate.setHours(12, 0, 0, 0);
+
+let filter = '전체';
+let categoryFilter = '전체';
+let searchQuery = '';
+
+let statKind = '지출';
+let statMode = 'monthly';
+
+const hiddenStatCategories = new Set();
+
+const kinds = [
+  '수입',
+  '지출',
+  '저축',
+  '투자'
+];
+
+const defaults = {
+  수입: [
+    '급여',
+    '부업',
+    '용돈',
+    '캐시백',
+    '이자',
+    '기타'
+  ],
+
+  지출: [
+    '식비',
+    '데이트비',
+    '구독서비스',
+    '통신요금',
+    '쇼핑',
+    '교통비',
+    '의료비',
+    '여가생활비',
+    '기타'
+  ],
+
+  저축: [
+    '적금',
+    '예금',
+    '청약',
+    '비상금',
+    '기타'
+  ],
+
+  투자: [
+    '매수',
+    '매도',
+    '배당금',
+    '외화 구매',
+    '외화 판매'
+  ]
+};
+
+/* =========================================================
+   기본 유틸
+========================================================= */
+
+const esc = value =>
+  String(value ?? '').replace(
+    /[&<>"']/g,
+    char => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    })[char]
+  );
+
+const num = value =>
+  new Intl.NumberFormat(
+    'ko-KR'
+  ).format(
+    Math.round(
+      Number(value || 0)
+    )
+  );
+
+const won = value =>
+  `₩${num(value)}`;
+
+function localDateKey(d) {
+  return [
+    d.getFullYear(),
+    String(
+      d.getMonth() + 1
+    ).padStart(2, '0'),
+    String(
+      d.getDate()
+    ).padStart(2, '0')
+  ].join('-');
+}
+
+function toDate(value) {
+  if (value instanceof Date) {
+    return new Date(
+      value.getFullYear(),
+      value.getMonth(),
+      value.getDate(),
+      12
+    );
+  }
+
+  const raw =
+    String(value || '');
+
+  if (
+    /^\d{4}-\d{2}-\d{2}$/.test(
+      raw
+    )
+  ) {
+    const [y, m, d] =
+      raw
+        .split('-')
+        .map(Number);
+
+    return new Date(
+      y,
+      m - 1,
+      d,
+      12
+    );
+  }
+
+  const parsed =
+    new Date(raw);
+
+  return new Date(
+    parsed.getFullYear(),
+    parsed.getMonth(),
+    parsed.getDate(),
+    12
+  );
+}
+
+function date(value) {
+  return localDateKey(
+    toDate(value)
+  );
+}
+
+function makeISO(dateString) {
+  const [y, m, d] =
+    dateString
+      .split('-')
+      .map(Number);
+
+  return new Date(
+    y,
+    m - 1,
+    d,
+    12
+  ).toISOString();
+}
+
+function ym(d) {
+  return (
+    `${d.getFullYear()}-` +
+    `${String(
+      d.getMonth() + 1
+    ).padStart(2, '0')}`
+  );
+}
+
+function dateParts(value) {
+  const d =
+    toDate(value);
+
+  const weekdays = [
+    '일',
+    '월',
+    '화',
+    '수',
+    '목',
+    '금',
+    '토'
+  ];
+
+  return {
+    year: d.getFullYear(),
+    month: d.getMonth() + 1,
+    day: d.getDate(),
+    weekday:
+      weekdays[d.getDay()]
+  };
+}
+
+function shortDate(value) {
+  const p =
+    dateParts(value);
+
+  return (
+    `${p.month}/${p.day} ` +
+    `${p.weekday}`
+  );
+}
+
+/* =========================================================
+   반복 날짜
+========================================================= */
+
+function addRepeatDate(
+  anchorValue,
+  frequency,
+  step
+) {
+  const anchor =
+    toDate(anchorValue);
+
+  if (step === 0) {
+    return new Date(
+      anchor.getFullYear(),
+      anchor.getMonth(),
+      anchor.getDate(),
+      12
+    );
+  }
+
+  if (frequency === 'daily') {
+    return new Date(
+      anchor.getFullYear(),
+      anchor.getMonth(),
+      anchor.getDate() + step,
+      12
+    );
+  }
+
+  if (frequency === 'weekly') {
+    return new Date(
+      anchor.getFullYear(),
+      anchor.getMonth(),
+      anchor.getDate() +
+        7 * step,
+      12
+    );
+  }
+
+  if (frequency === 'yearly') {
+    const year =
+      anchor.getFullYear() +
+      step;
+
+    const monthIndex =
+      anchor.getMonth();
+
+    const lastDay =
+      new Date(
+        year,
+        monthIndex + 1,
+        0,
+        12
+      ).getDate();
+
+    return new Date(
+      year,
+      monthIndex,
+      Math.min(
+        anchor.getDate(),
+        lastDay
+      ),
+      12
+    );
+  }
+
+  const rawMonth =
+    anchor.getMonth() +
+    step;
+
+  const year =
+    anchor.getFullYear() +
+    Math.floor(
+      rawMonth / 12
+    );
+
+  const monthIndex =
+    (
+      rawMonth % 12 +
+      12
+    ) % 12;
+
+  const lastDay =
+    new Date(
+      year,
+      monthIndex + 1,
+      0,
+      12
+    ).getDate();
+
+  return new Date(
+    year,
+    monthIndex,
+    Math.min(
+      anchor.getDate(),
+      lastDay
+    ),
+    12
+  );
+}
+
+function frequencyLabel(
+  frequency
+) {
+  return ({
+    daily: '매일',
+    weekly: '매주',
+    monthly: '매월',
+    yearly: '매년'
+  })[frequency] || '반복';
+}
+
+/* =========================================================
+   거래 방향 / 금액
+========================================================= */
+
+function inv(t) {
+  if (t.kind !== '투자') {
+    return null;
+  }
+
+  const category =
+    String(
+      t.category || ''
+    );
+
+  if (
+    category.includes('매수') ||
+    category.includes(
+      '외화 구매'
+    )
+  ) {
+    return 'buy';
+  }
+
+  if (
+    category.includes('매도') ||
+    category.includes('배당') ||
+    category.includes(
+      '외화 판매'
+    )
+  ) {
+    return 'plus';
+  }
+
+  return 'other';
+}
+
+function sign(t) {
+  if (t.kind === '수입') {
+    return '+';
+  }
+
+  if (t.kind === '지출') {
+    return '−';
+  }
+
+  if (t.kind === '투자') {
+    if (inv(t) === 'plus') {
+      return '+';
+    }
+
+    if (inv(t) === 'buy') {
+      return '−';
+    }
+  }
+
+  return '';
+}
+
+function money(t) {
+  return (
+    `${sign(t)}` +
+    `${won(t.amount)}`
+  );
+}
+
+function signedValue(t) {
+  const amount =
+    Number(t.amount || 0);
+
+  if (t.kind === '수입') {
+    return amount;
+  }
+
+  if (t.kind === '지출') {
+    return -amount;
+  }
+
+  if (t.kind === '투자') {
+    if (inv(t) === 'plus') {
+      return amount;
+    }
+
+    if (inv(t) === 'buy') {
+      return -amount;
+    }
+  }
+
+  return 0;
+}
+
+function signedMoney(value) {
+  const n =
+    Number(value || 0);
+
+  if (n > 0) {
+    return `+${won(n)}`;
+  }
+
+  if (n < 0) {
+    return (
+      `−${won(
+        Math.abs(n)
+      )}`
+    );
+  }
+
+  return won(0);
+}
+
+/* =========================================================
+   금액 계산기
+========================================================= */
+
+function tokenizeExpression(
+  input
+) {
+  const source =
+    String(input)
+      .replace(/,/g, '')
+      .replace(/\s+/g, '');
+
+  if (!source) {
+    throw new Error(
+      '금액을 입력해주세요.'
+    );
+  }
+
+  if (
+    !/^[0-9+\-*/().]+$/.test(
+      source
+    )
+  ) {
+    throw new Error(
+      '금액을 확인해주세요.'
+    );
+  }
+
+  const tokens = [];
+  let number = '';
+
+  for (
+    let i = 0;
+    i < source.length;
+    i++
+  ) {
+    const ch =
+      source[i];
+
+    if (
+      (
+        ch >= '0' &&
+        ch <= '9'
+      ) ||
+      ch === '.'
+    ) {
+      number += ch;
+      continue;
+    }
+
+    if (number) {
+      if (
+        (
+          number.match(/\./g) ||
+          []
+        ).length > 1
+      ) {
+        throw new Error(
+          '금액을 확인해주세요.'
+        );
+      }
+
+      tokens.push(
+        Number(number)
+      );
+
+      number = '';
+    }
+
+    if (
+      '+-*/()'.includes(ch)
+    ) {
+      tokens.push(ch);
+    } else {
+      throw new Error(
+        '금액을 확인해주세요.'
+      );
+    }
+  }
+
+  if (number) {
+    if (
+      (
+        number.match(/\./g) ||
+        []
+      ).length > 1
+    ) {
+      throw new Error(
+        '금액을 확인해주세요.'
+      );
+    }
+
+    tokens.push(
+      Number(number)
+    );
+  }
+
+  return tokens;
+}
+
+function calc(input) {
+  const tokens =
+    tokenizeExpression(input);
+
+  const output = [];
+  const operators = [];
+
+  const precedence = {
+    '+': 1,
+    '-': 1,
+    '*': 2,
+    '/': 2
+  };
+
+  let previous = null;
+
+  tokens.forEach(token => {
+    if (
+      typeof token ===
+      'number'
+    ) {
+      if (
+        !Number.isFinite(token)
+      ) {
+        throw new Error(
+          '금액을 확인해주세요.'
+        );
+      }
+
+      output.push(token);
+      previous = 'number';
+      return;
+    }
+
+    if (token === '(') {
+      operators.push(token);
+      previous = '(';
+      return;
+    }
+
+    if (token === ')') {
+      while (
+        operators.length &&
+        operators.at(-1) !== '('
+      ) {
+        output.push(
+          operators.pop()
+        );
+      }
+
+      if (
+        operators.pop() !== '('
+      ) {
+        throw new Error(
+          '괄호를 확인해주세요.'
+        );
+      }
+
+      previous = ')';
+      return;
+    }
+
+    if (
+      '+-*/'.includes(token)
+    ) {
+      if (
+        (
+          token === '+' ||
+          token === '-'
+        ) &&
+        (
+          previous === null ||
+          previous ===
+            'operator' ||
+          previous === '('
+        )
+      ) {
+        output.push(0);
+      }
+
+      while (
+        operators.length &&
+        operators.at(-1) !== '(' &&
+        precedence[
+          operators.at(-1)
+        ] >=
+          precedence[token]
+      ) {
+        output.push(
+          operators.pop()
+        );
+      }
+
+      operators.push(token);
+      previous = 'operator';
+    }
+  });
+
+  while (operators.length) {
+    const op =
+      operators.pop();
+
+    if (
+      op === '(' ||
+      op === ')'
+    ) {
+      throw new Error(
+        '괄호를 확인해주세요.'
+      );
+    }
+
+    output.push(op);
+  }
+
+  const stack = [];
+
+  output.forEach(token => {
+    if (
+      typeof token ===
+      'number'
+    ) {
+      stack.push(token);
+      return;
+    }
+
+    if (stack.length < 2) {
+      throw new Error(
+        '계산식을 확인해주세요.'
+      );
+    }
+
+    const b = stack.pop();
+    const a = stack.pop();
+
+    if (token === '+') {
+      stack.push(a + b);
+    }
+
+    if (token === '-') {
+      stack.push(a - b);
+    }
+
+    if (token === '*') {
+      stack.push(a * b);
+    }
+
+    if (token === '/') {
+      if (b === 0) {
+        throw new Error(
+          '0으로 나눌 수 없습니다.'
+        );
+      }
+
+      stack.push(a / b);
+    }
+  });
+
+  if (stack.length !== 1) {
+    throw new Error(
+      '계산식을 확인해주세요.'
+    );
+  }
+
+  const result =
+    stack[0];
+
+  if (
+    !Number.isFinite(result) ||
+    result < 0
+  ) {
+    throw new Error(
+      '금액을 확인해주세요.'
+    );
+  }
+
+  return Math.round(result);
+}
+
+/* =========================================================
+   합계
+========================================================= */
+
+function sum(items) {
+  const kindTotal =
+    kind =>
+      items
+        .filter(
+          t =>
+            t.kind === kind
+        )
+        .reduce(
+          (total, t) =>
+            total +
+            Number(
+              t.amount || 0
+            ),
+          0
+        );
+
+  const plus =
+    items
+      .filter(
+        t =>
+          inv(t) === 'plus'
+      )
+      .reduce(
+        (total, t) =>
+          total +
+          Number(
+            t.amount || 0
+          ),
+        0
+      );
+
+  const buy =
+    items
+      .filter(
+        t =>
+          inv(t) === 'buy'
+      )
+      .reduce(
+        (total, t) =>
+          total +
+          Number(
+            t.amount || 0
+          ),
+        0
+      );
+
+  const income =
+    kindTotal('수입');
+
+  const expense =
+    kindTotal('지출');
+
+  const saving =
+    kindTotal('저축');
+
+  return {
+    income,
+    expense,
+    saving,
+    plus,
+    buy,
+
+    balance:
+      income +
+      plus -
+      expense -
+      buy
+  };
+}
+
+function monthly(
+  d = month
+) {
+  const key =
+    ym(d);
+
+  return tx.filter(
+    t =>
+      date(t.date)
+        .startsWith(key)
+  );
+}
+
+function yearly(
+  year =
+    month.getFullYear()
+) {
+  return tx.filter(
+    t =>
+      toDate(t.date)
+        .getFullYear() ===
+      year
+  );
+}
+
+function daily(
+  d = historyDate
+) {
+  const key =
+    date(d);
+
+  return tx.filter(
+    t =>
+      date(t.date) === key
+  );
+}
+
+/* =========================================================
+   카테고리
+========================================================= */
+
+function normalizedCategory(
+  category
+) {
+  return (
+    category === '배당'
+      ? '배당금'
+      : category
+  );
+}
+
+function allCategoriesForKind(
+  kind
+) {
+  const custom =
+    (
+      settings
+        .custom_categories ||
+      []
+    )
+      .filter(item => {
+        const raw =
+          item.kindRawValue ||
+          item.kind ||
+          item.type;
+
+        return (
+          !kind ||
+          kind === '전체' ||
+          raw === kind
+        );
+      })
+      .map(
+        item => item.name
+      )
+      .filter(Boolean)
+      .map(
+        normalizedCategory
+      );
+
+  if (
+    kind &&
+    kind !== '전체'
+  ) {
+    const fromTransactions =
+      tx
+        .filter(
+          t => t.kind === kind
+        )
+        .map(
+          t =>
+            normalizedCategory(
+              t.category
+            )
+        )
+        .filter(Boolean);
+
+    return [
+      ...new Set([
+        ...(defaults[kind] || []),
+        ...custom,
+        ...fromTransactions
+      ])
+    ];
+  }
+
+  return [
+    ...new Set([
+      ...Object
+        .values(defaults)
+        .flat(),
+
+      ...custom,
+
+      ...tx
+        .map(
+          t =>
+            normalizedCategory(
+              t.category
+            )
+        )
+        .filter(Boolean)
+    ])
+  ];
+}
+
+function cats(kind) {
+  return allCategoriesForKind(
+    kind
+  );
+}
+
+/* =========================================================
+   SVG
+========================================================= */
+
+function svgIcon(name) {
+  const start = `
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.8"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+  `;
+
+  const icons = {
+    money: `
+      <rect x="3" y="6" width="18" height="12" rx="2"/>
+      <circle cx="12" cy="12" r="2.5"/>
+      <path d="M6 9h.01M18 15h.01"/>
+    `,
+
+    briefcase: `
+      <rect x="3" y="7" width="18" height="12" rx="2"/>
+      <path d="M9 7V5h6v2"/>
+      <path d="M3 11.5c5.5 3 12.5 3 18 0"/>
+    `,
+
+    coin: `
+      <circle cx="12" cy="12" r="8"/>
+      <path d="M12 7.5v9"/>
+    `,
+
+    percent: `
+      <circle cx="7" cy="7" r="2"/>
+      <circle cx="17" cy="17" r="2"/>
+      <path d="M18 6L6 18"/>
+    `,
+
+    plusCircle: `
+      <circle cx="12" cy="12" r="8"/>
+      <path d="M12 8v8M8 12h8"/>
+    `,
+
+    food: `
+      <path d="M7 3v7M4.5 3v4.5A2.5 2.5 0 0 0 7 10v11"/>
+      <path d="M16 3c2.5 2.5 2.5 7 0 9v9"/>
+    `,
+
+    heart: `
+      <path d="M20.8 5.8a5 5 0 0 0-7.1 0L12 7.5l-1.7-1.7a5 5 0 1 0-7.1 7.1L12 21l8.8-8.1a5 5 0 0 0 0-7.1z"/>
+    `,
+
+    subscription: `
+      <rect x="4" y="5" width="16" height="14" rx="3"/>
+      <path d="M8 9h8M8 13h5"/>
+    `,
+
+    phone: `
+      <rect x="7" y="2.5" width="10" height="19" rx="2"/>
+    `,
+
+    bag: `
+      <path d="M5 8h14l1 13H4L5 8z"/>
+      <path d="M9 8V6a3 3 0 0 1 6 0v2"/>
+    `,
+
+    bus: `
+      <rect x="5" y="3" width="14" height="16" rx="3"/>
+      <path d="M7 8h10"/>
+    `,
+
+    medical: `
+      <rect x="4" y="7" width="16" height="13" rx="2"/>
+      <path d="M12 10v6M9 13h6"/>
+    `,
+
+    ticket: `
+      <path d="M4 7h16v4a2 2 0 0 0 0 4v4H4v-4a2 2 0 0 0 0-4V7z"/>
+    `,
+
+    bank: `
+      <path d="M3 9l9-5 9 5"/>
+      <path d="M5 10h14M5 19h14"/>
+      <path d="M7 10v9M11 10v9M15 10v9M19 10v9"/>
+    `,
+
+    tag: `
+      <path d="M3 12V5a2 2 0 0 1 2-2h7l9 9-9 9-9-9z"/>
+      <circle cx="8" cy="8" r="1.2"/>
+    `,
+
+    house: `
+      <path d="M3 11l9-8 9 8"/>
+      <path d="M5 10v11h14V10"/>
+    `,
+
+    shield: `
+      <path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6l7-3z"/>
+    `,
+
+    buy: `
+      <circle cx="12" cy="12" r="8"/>
+      <path d="M12 7v10M8 13l4 4 4-4"/>
+    `,
+
+    sell: `
+      <circle cx="12" cy="12" r="8"/>
+      <path d="M12 17V7M8 11l4-4 4 4"/>
+    `,
+
+    dividend: `
+      <rect x="3" y="6" width="18" height="12" rx="2"/>
+      <path d="M6 10h12M7 14h4"/>
+      <circle cx="16" cy="14" r="2"/>
+    `,
+
+    exchange: `
+      <circle cx="12" cy="12" r="8"/>
+      <path d="M7.5 10h9"/>
+      <path d="M14 7.5l2.5 2.5-2.5 2.5"/>
+      <path d="M16.5 14h-9"/>
+    `
+  };
+
+  return (
+    start +
+    (
+      icons[name] ||
+      icons.plusCircle
+    ) +
+    '</svg>'
+  );
+}
+
+function categoryIcon(t) {
+  const category =
+    String(
+      t.category || ''
+    );
+
+  if (
+    category.includes('급여')
+  ) {
+    return svgIcon('money');
+  }
+
+  if (
+    category.includes('부업')
+  ) {
+    return svgIcon(
+      'briefcase'
+    );
+  }
+
+  if (
+    category.includes('용돈')
+  ) {
+    return svgIcon('money');
+  }
+
+  if (
+    category.includes('캐시백')
+  ) {
+    return svgIcon('coin');
+  }
+
+  if (
+    category.includes('이자')
+  ) {
+    return svgIcon(
+      'percent'
+    );
+  }
+
+  if (
+    category.includes('식비')
+  ) {
+    return svgIcon('food');
+  }
+
+  if (
+    category.includes('데이트')
+  ) {
+    return svgIcon('heart');
+  }
+
+  if (
+    category.includes('구독')
+  ) {
+    return svgIcon(
+      'subscription'
+    );
+  }
+
+  if (
+    category.includes('통신')
+  ) {
+    return svgIcon('phone');
+  }
+
+  if (
+    category.includes('쇼핑')
+  ) {
+    return svgIcon('bag');
+  }
+
+  if (
+    category.includes('교통')
+  ) {
+    return svgIcon('bus');
+  }
+
+  if (
+    category.includes('의료')
+  ) {
+    return svgIcon(
+      'medical'
+    );
+  }
+
+  if (
+    category.includes('여가')
+  ) {
+    return svgIcon('ticket');
+  }
+
+  if (
+    category.includes('적금')
+  ) {
+    return svgIcon('bank');
+  }
+
+  if (
+    category.includes('예금')
+  ) {
+    return svgIcon('tag');
+  }
+
+  if (
+    category.includes('청약')
+  ) {
+    return svgIcon('house');
+  }
+
+  if (
+    category.includes('비상금')
+  ) {
+    return svgIcon('shield');
+  }
+
+  if (
+    category.includes(
+      '외화 구매'
+    ) ||
+    category.includes(
+      '외화 판매'
+    )
+  ) {
+    return svgIcon(
+      'exchange'
+    );
+  }
+
+  if (
+    category.includes('매수')
+  ) {
+    return svgIcon('buy');
+  }
+
+  if (
+    category.includes('매도')
+  ) {
+    return svgIcon('sell');
+  }
+
+  if (
+    category.includes('배당')
+  ) {
+    return svgIcon(
+      'dividend'
+    );
+  }
+
+  return svgIcon(
+    'plusCircle'
+  );
+}
+
+/* =========================================================
+   데이터 로드
+========================================================= */
+
+async function load() {
+  const [
+    transactionResult,
+    settingResult
+  ] = await Promise.all([
+    db
+      .from('transactions')
+      .select('*')
+      .order(
+        'date',
+        {
+          ascending: false
+        }
+      ),
+
+    db
+      .from('settings')
+      .select('*')
+      .eq(
+        'user_id',
+        user.id
+      )
+      .maybeSingle()
+  ]);
+
+  if (
+    transactionResult.error
+  ) {
+    throw (
+      transactionResult.error
+    );
+  }
+
+  if (settingResult.error) {
+    throw settingResult.error;
+  }
+
+  tx =
+    transactionResult.data ||
+    [];
+
+  settings =
+    settingResult.data ||
+    settings;
+
+  render();
+}
+
+/* =========================================================
+   로그인
+========================================================= */
+
+function auth(msg = '') {
+  root.innerHTML = `
+    <main class="auth">
+
+      <h1>재하 가계부</h1>
+
+      <form
+        id="login"
+        class="panel"
+      >
+
+        <label>이메일</label>
+
+        <input
+          name="email"
+          type="email"
+          required
+        >
+
+        <label>비밀번호</label>
+
+        <input
+          name="password"
+          type="password"
+          required
+        >
+
+        <div class="actions">
+
+          <button>
+            로그인
+          </button>
+
+          <button
+            type="button"
+            class="soft"
+            id="signup"
+          >
+            첫 계정 만들기
+          </button>
+
+        </div>
+
+        <p>${esc(msg)}</p>
+
+      </form>
+
+    </main>
+  `;
+
+  const form =
+    root.querySelector(
+      '#login'
+    );
+
+  form.onsubmit =
+    async e => {
+      e.preventDefault();
+
+      const data =
+        new FormData(form);
+
+      const { error } =
+        await db.auth
+          .signInWithPassword({
+            email:
+              data.get('email'),
+
+            password:
+              data.get(
+                'password'
+              )
+          });
+
+      if (error) {
+        auth(error.message);
+      }
+    };
+
+  root
+    .querySelector(
+      '#signup'
+    )
+    .onclick =
+    async () => {
+      const data =
+        new FormData(form);
+
+      const { error } =
+        await db.auth
+          .signUp({
+            email:
+              data.get('email'),
+
+            password:
+              data.get(
+                'password'
+              )
+          });
+
+      auth(
+        error
+          ? error.message
+          : '이메일 인증 후 로그인하세요.'
+      );
+    };
+}
+
+/* =========================================================
+   상단 메뉴
+========================================================= */
+
+function nav() {
+  return `
+    <header class="nav">
+
+      <div class="nav-capsule">
+
+        ${[
+          '홈',
+          '내역',
+          '캘린더',
+          '통계',
+          '설정'
+        ].map(item => `
+          <button
+            data-view="${item}"
+            class="${
+              view === item
+                ? 'on'
+                : ''
+            }"
+          >
+            ${item}
+          </button>
+        `).join('')}
+
+      </div>
+
+      <button
+        id="add"
+        class="add"
+        aria-label="거래 추가"
+      >
+        ＋
+      </button>
+
+    </header>
+  `;
+}
+
+/* =========================================================
+   월 이동
+========================================================= */
+
+function monthbar() {
+  return `
+    <div class="month">
+
+      <button id="prev">
+        ‹
+      </button>
+
+      <div>
+
+        <b>
+          ${month.getFullYear()}년
+          ${month.getMonth() + 1}월
+        </b>
+
+        <button id="today">
+          오늘
+        </button>
+
+      </div>
+
+      <button id="next">
+        ›
+      </button>
+
+    </div>
+  `;
+}
+
+/* =========================================================
+   홈
+========================================================= */
+
+function cards(s) {
+  return `
+    <section
+      class="cards home-summary"
+    >
+
+      <article
+        class="
+          summary-card
+          summary-income
+        "
+      >
+        <div class="summary-label">
+          수입
+        </div>
+
+        <b>
+          +${won(s.income)}
+        </b>
+      </article>
+
+      <article
+        class="
+          summary-card
+          summary-expense
+        "
+      >
+        <div class="summary-label">
+          지출
+        </div>
+
+        <b>
+          −${won(s.expense)}
+        </b>
+      </article>
+
+      <article
+        class="
+          summary-card
+          summary-saving
+        "
+      >
+        <div class="summary-label">
+          저축
+        </div>
+
+        <b>
+          ${won(s.saving)}
+        </b>
+      </article>
+
+      <article
+        class="
+          summary-card
+          summary-investment
+        "
+      >
+
+        <div class="summary-label">
+          투자
+        </div>
+
+        <div
+          class="investment-part"
+        >
+          <span>
+            매도·배당금·외화 판매
+          </span>
+
+          <b>
+            +${won(s.plus)}
+          </b>
+        </div>
+
+        <div
+          class="investment-divider"
+        ></div>
+
+        <div
+          class="investment-part"
+        >
+          <span>
+            매수·외화 구매
+          </span>
+
+          <b>
+            −${won(s.buy)}
+          </b>
+        </div>
+
+      </article>
+
+    </section>
+  `;
+}
+
+function home() {
+  const items =
+    monthly();
+
+  const s =
+    sum(items);
+
+  return `
+    ${monthbar()}
+
+    <section class="balance">
+
+      <span>
+        이번 달 생활수지
+      </span>
+
+      <b>
+        ${signedMoney(
+          s.balance
+        )}
+      </b>
+
+    </section>
+
+    ${cards(s)}
+  `;
+}
+
+/* =========================================================
+   거래 목록
+========================================================= */
+
+function rows(items) {
+  if (!items.length) {
+    return `
+      <div class="empty">
+        거래가 없어요.
+      </div>
+    `;
+  }
+
+  return `
+    <div class="rows">
+
+      ${items.map(t => `
+        <div
+          class="row"
+          data-id="${t.id}"
+        >
+
+          <div class="row-icon">
+            ${categoryIcon(t)}
+          </div>
+
+          <div class="row-copy">
+
+            <b class="row-title">
+              ${esc(t.title)}
+            </b>
+
+            <small class="row-meta">
+
+              ${esc(
+                normalizedCategory(
+                  t.category
+                )
+              )}
+
+              <span
+                class="row-divider"
+              >
+                ·
+              </span>
+
+              ${shortDate(t.date)}
+
+              ${
+                t.repeat_series_id
+                  ? `
+                    <span
+                      class="repeat-mark"
+                    >
+                      ↻
+                    </span>
+                  `
+                  : ''
+              }
+
+            </small>
+
+            ${
+              String(
+                t.note || ''
+              ).trim()
+                ? `
+                  <small
+                    class="row-note"
+                  >
+                    ${esc(t.note)}
+                  </small>
+                `
+                : ''
+            }
+
+          </div>
+
+          <strong
+            class="row-amount"
+          >
+            ${money(t)}
+          </strong>
+
+        </div>
+      `).join('')}
+
+    </div>
+  `;
+}
+
 /* =========================================================
    내역
 ========================================================= */
 
 function historyPeriodItems() {
   if (historyMode === 'day') {
-    return daily(historyDate);
+    return daily(
+      historyDate
+    );
   }
 
-  if (historyMode === 'year') {
+  if (
+    historyMode === 'year'
+  ) {
     return yearly(
-      historyDate.getFullYear()
+      historyDate
+        .getFullYear()
     );
   }
 
@@ -30,17 +1733,21 @@ function historyBaseItems() {
   if (filter !== '전체') {
     items =
       items.filter(
-        t => t.kind === filter
+        t =>
+          t.kind === filter
       );
   }
 
   if (
-    categoryFilter !== '전체'
+    categoryFilter !==
+    '전체'
   ) {
     items =
       items.filter(
         t =>
-          t.category ===
+          normalizedCategory(
+            t.category
+          ) ===
           categoryFilter
       );
   }
@@ -55,7 +1762,9 @@ function historyBaseItems() {
       items.filter(t =>
         [
           t.title,
-          t.category,
+          normalizedCategory(
+            t.category
+          ),
           t.note
         ]
           .join(' ')
@@ -80,7 +1789,9 @@ function historySummary(items) {
       items.reduce(
         (s, t) =>
           s +
-          Number(t.amount || 0),
+          Number(
+            t.amount || 0
+          ),
         0
       );
 
@@ -95,7 +1806,9 @@ function historySummary(items) {
       items.reduce(
         (s, t) =>
           s +
-          Number(t.amount || 0),
+          Number(
+            t.amount || 0
+          ),
         0
       );
 
@@ -110,7 +1823,9 @@ function historySummary(items) {
       items.reduce(
         (s, t) =>
           s +
-          Number(t.amount || 0),
+          Number(
+            t.amount || 0
+          ),
         0
       );
 
@@ -123,7 +1838,8 @@ function historySummary(items) {
   const total =
     items.reduce(
       (s, t) =>
-        s + signedValue(t),
+        s +
+        signedValue(t),
       0
     );
 
@@ -135,21 +1851,29 @@ function historySummary(items) {
 
 function historyPeriodTitle() {
   const y =
-    historyDate.getFullYear();
+    historyDate
+      .getFullYear();
 
   const m =
-    historyDate.getMonth() + 1;
+    historyDate
+      .getMonth() + 1;
 
   const d =
-    historyDate.getDate();
+    historyDate
+      .getDate();
 
-  if (historyMode === 'year') {
+  if (
+    historyMode === 'year'
+  ) {
     return `${y}년`;
   }
 
-  if (historyMode === 'day') {
+  if (
+    historyMode === 'day'
+  ) {
     return (
-      `${y}년 ${m}월 ${d}일`
+      `${y}년 ${m}월 ` +
+      `${d}일`
     );
   }
 
@@ -166,68 +1890,70 @@ function history() {
     );
 
   return `
-    <section class="history-toolbar">
+    <section
+      class="history-toolbar"
+    >
 
-      <div class="history-top-row">
+      <div
+        class="history-top-row"
+      >
 
         <div
-          class="history-period-toggle"
+          class="
+            history-period-toggle
+          "
         >
 
-          <button
-            data-history-mode="month"
-            class="${
-              historyMode === 'month'
-                ? 'on'
-                : ''
-            }"
-          >
-            월
-          </button>
-
-          <button
-            data-history-mode="year"
-            class="${
-              historyMode === 'year'
-                ? 'on'
-                : ''
-            }"
-          >
-            연
-          </button>
-
-          <button
-            data-history-mode="day"
-            class="${
-              historyMode === 'day'
-                ? 'on'
-                : ''
-            }"
-          >
-            일
-          </button>
+          ${[
+            ['month', '월'],
+            ['year', '연'],
+            ['day', '일']
+          ].map(
+            ([mode, label]) => `
+              <button
+                data-history-mode="${mode}"
+                class="${
+                  historyMode ===
+                  mode
+                    ? 'on'
+                    : ''
+                }"
+              >
+                ${label}
+              </button>
+            `
+          ).join('')}
 
         </div>
 
         <div
-          class="history-search-wrap"
+          class="
+            history-search-wrap
+          "
         >
           <input
             id="search"
-            value="${esc(searchQuery)}"
+            value="${
+              esc(searchQuery)
+            }"
             placeholder="이름, 카테고리, 메모 검색"
           >
         </div>
 
         <div
-          class="history-period-nav"
+          class="
+            history-period-nav
+          "
         >
+
           <button id="prev">
             ‹
           </button>
 
           <b>
-            ${historyPeriodTitle()}
+            ${
+              historyPeriodTitle()
+            }
           </b>
 
           <button
@@ -240,6 +1966,7 @@ function history() {
           <button id="next">
             ›
           </button>
+
         </div>
 
       </div>
@@ -253,8 +1980,11 @@ function history() {
         ></div>
 
         <div
-          class="history-filter-row"
+          class="
+            history-filter-row
+          "
         >
+
           <div class="tabs">
 
             ${[
@@ -274,10 +2004,13 @@ function history() {
             `).join('')}
 
           </div>
+
         </div>
 
         <div
-          class="category-filter-wrap"
+          class="
+            category-filter-wrap
+          "
         >
 
           <button
@@ -286,7 +2019,9 @@ function history() {
           >
 
             <span
-              class="category-button-icon"
+              class="
+                category-button-icon
+              "
             >
               ${svgIcon('tag')}
             </span>
@@ -303,7 +2038,9 @@ function history() {
             </span>
 
             <span
-              class="category-chevron"
+              class="
+                category-chevron
+              "
             >
               ⌄
             </span>
@@ -325,10 +2062,14 @@ function history() {
                   : ''
               }"
             >
-              <span class="menu-icon">
-                ${svgIcon(
-                  'plusCircle'
-                )}
+              <span
+                class="menu-icon"
+              >
+                ${
+                  svgIcon(
+                    'plusCircle'
+                  )
+                }
               </span>
 
               전체 카테고리
@@ -366,11 +2107,15 @@ function history() {
             ).join('')}
 
           </div>
+
         </div>
+
       </div>
 
       <div
-        class="history-result-summary"
+        class="
+          history-result-summary
+        "
       >
         ${historySummary(items)}
       </div>
@@ -408,17 +2153,21 @@ function dailyCashflow(items) {
 function cashflowText(value) {
   if (value > 0) {
     return {
-      className: 'positive',
-      text: num(value)
+      className:
+        'positive',
+      text:
+        num(value)
     };
   }
 
   if (value < 0) {
     return {
-      className: 'negative',
-      text: num(
-        Math.abs(value)
-      )
+      className:
+        'negative',
+      text:
+        num(
+          Math.abs(value)
+        )
     };
   }
 
@@ -577,7 +2326,9 @@ function calendar() {
               `
               : `
                 <span
-                  class="day-flow-spacer"
+                  class="
+                    day-flow-spacer
+                  "
                 ></span>
               `
           }
@@ -591,7 +2342,9 @@ function calendar() {
 
         </div>
 
-        <div class="calendar-items">
+        <div
+          class="calendar-items"
+        >
 
           ${items
             .slice(
@@ -620,7 +2373,11 @@ function calendar() {
                 </strong>
 
                 <small>
-                  ${esc(t.category)}
+                  ${esc(
+                    normalizedCategory(
+                      t.category
+                    )
+                  )}
                 </small>
 
               </button>
@@ -699,7 +2456,16 @@ function transactionsForStatKind(
   );
 }
 
-function statCategoryName(t) {
+function normalizedStatCategory(
+  t
+) {
+  const category =
+    normalizedCategory(
+      String(
+        t.category || '기타'
+      )
+    );
+
   if (
     statKind === '생활수지'
   ) {
@@ -711,16 +2477,10 @@ function statCategoryName(t) {
       return '지출';
     }
 
-    return (
-      t.category ||
-      '투자'
-    );
+    return category;
   }
 
-  return (
-    t.category ||
-    '기타'
-  );
+  return category;
 }
 
 function statCategoryValue(t) {
@@ -758,8 +2518,9 @@ function categoryTotalsForYear(
 
   items.forEach(t => {
     let category =
-      t.category ||
-      '기타';
+      normalizedCategory(
+        t.category || '기타'
+      );
 
     if (
       kind === '생활수지'
@@ -824,7 +2585,6 @@ function statColorMap(
 
 function monthlyStats(year) {
   const monthData = [];
-
   const categorySet =
     new Set();
 
@@ -855,7 +2615,9 @@ function monthlyStats(year) {
 
     relevant.forEach(t => {
       const category =
-        statCategoryName(t);
+        normalizedStatCategory(
+          t
+        );
 
       const value =
         statCategoryValue(t);
@@ -879,9 +2641,7 @@ function monthlyStats(year) {
     [...categorySet];
 
   const colors =
-    statColorMap(
-      categories
-    );
+    statColorMap(categories);
 
   const activeCategories =
     categories.filter(
@@ -893,15 +2653,19 @@ function monthlyStats(year) {
   const monthTotals =
     monthData.map(
       data =>
-        activeCategories.reduce(
-          (total, category) =>
-            total +
-            Math.abs(
-              data[category] ||
-              0
-            ),
-          0
-        )
+        activeCategories
+          .reduce(
+            (
+              total,
+              category
+            ) =>
+              total +
+              Math.abs(
+                data[category] ||
+                0
+              ),
+            0
+          )
     );
 
   const maxMonthTotal =
@@ -918,7 +2682,9 @@ function monthlyStats(year) {
       </h2>
 
       <div
-        class="stat-horizontal-chart"
+        class="
+          stat-horizontal-chart
+        "
       >
 
         ${monthData.map(
@@ -1006,13 +2772,9 @@ function monthlyStats(year) {
                               width:${width}%
                             "
                             title="${
-                              esc(
-                                category
-                              )
+                              esc(category)
                             } ${
-                              won(
-                                value
-                              )
+                              won(value)
                             }"
                           ></i>
                         `;
@@ -1102,7 +2864,8 @@ function categoryStats(year) {
     );
 
   const entries =
-    Object.entries(totals)
+    Object
+      .entries(totals)
       .sort(
         (a, b) =>
           Math.abs(b[1]) -
@@ -1152,7 +2915,9 @@ function categoryStats(year) {
       </h2>
 
       <div
-        class="category-stat-list"
+        class="
+          category-stat-list
+        "
       >
 
         ${entries.map(
@@ -1235,7 +3000,9 @@ function categoryStats(year) {
                 </div>
 
                 <small>
-                  ${ratio.toFixed(1)}%
+                  ${
+                    ratio.toFixed(1)
+                  }%
                 </small>
 
               </div>
@@ -1341,9 +3108,7 @@ function settingsHTML() {
   return `
     <div class="settings">
 
-      <h3>
-        데이터
-      </h3>
+      <h3>데이터</h3>
 
       <p>
         기존 Swift 백업을 가져오거나
@@ -1494,7 +3259,7 @@ function moveHistory(
 }
 
 /* =========================================================
-   공통 이벤트
+   이벤트
 ========================================================= */
 
 function bind() {
@@ -1561,7 +3326,8 @@ function bind() {
       ?.addEventListener(
         'click',
         () => {
-          month = new Date();
+          month =
+            new Date();
 
           month.setHours(
             12,
@@ -1913,6 +3679,17 @@ function bindSearch() {
    반복 거래 도우미
 ========================================================= */
 
+function repeatSequence(t) {
+  const n =
+    Number(
+      t.repeat_sequence
+    );
+
+  return Number.isFinite(n)
+    ? n
+    : 0;
+}
+
 function seriesFrom(t) {
   if (!t.repeat_series_id) {
     return [];
@@ -1927,14 +3704,8 @@ function seriesFrom(t) {
     .sort(
       (a, b) =>
         (
-          Number(
-            a.repeat_sequence ||
-            0
-          ) -
-          Number(
-            b.repeat_sequence ||
-            0
-          )
+          repeatSequence(a) -
+          repeatSequence(b)
         ) ||
         (
           toDate(a.date) -
@@ -1945,18 +3716,13 @@ function seriesFrom(t) {
 
 function seriesFutureFrom(t) {
   const sequence =
-    Number(
-      t.repeat_sequence ||
-      0
-    );
+    repeatSequence(t);
 
   return seriesFrom(t)
     .filter(
       item =>
-        Number(
-          item.repeat_sequence ||
-          0
-        ) >= sequence
+        repeatSequence(item) >=
+        sequence
     );
 }
 
@@ -2021,9 +3787,11 @@ function choiceModal({
                   }"
                   data-choice="${index}"
                 >
-                  ${esc(
-                    choice.label
-                  )}
+                  ${
+                    esc(
+                      choice.label
+                    )
+                  }
                 </button>
               `
             ).join('')}
@@ -2049,13 +3817,16 @@ function choiceModal({
         .forEach(button => {
           button.onclick =
             () => {
-              done(
+              const choice =
                 choices[
                   Number(
                     button.dataset
                       .choice
                   )
-                ].value
+                ];
+
+              done(
+                choice.value
               );
             };
         });
@@ -2091,73 +3862,66 @@ async function updateFutureSeries(
     toDate(payload.date);
 
   const oldSequence =
-    Number(
-      t.repeat_sequence ||
-      0
-    );
+    repeatSequence(t);
 
-  const results =
-    await Promise.all(
-      future.map(item => {
-        const sequence =
-          Number(
-            item.repeat_sequence ||
-            0
-          );
+  const frequency =
+    t.repeat_frequency ||
+    'monthly';
 
-        const newDate =
-          dateChanged
-            ? addRepeatDate(
-                newBase,
-                t.repeat_frequency ||
-                  'monthly',
-                sequence -
-                  oldSequence
-              ).toISOString()
-            : item.date;
+  for (
+    const item of future
+  ) {
+    const offset =
+      repeatSequence(item) -
+      oldSequence;
 
-        return db
-          .from(
-            'transactions'
-          )
-          .update({
-            title:
-              payload.title,
+    const newDate =
+      dateChanged
+        ? addRepeatDate(
+            newBase,
+            frequency,
+            offset
+          ).toISOString()
+        : item.date;
 
-            kind:
-              payload.kind,
+    const { error } =
+      await db
+        .from(
+          'transactions'
+        )
+        .update({
+          title:
+            payload.title,
 
-            category:
-              payload.category,
+          kind:
+            payload.kind,
 
-            amount:
-              payload.amount,
+          category:
+            payload.category,
 
-            note:
-              payload.note,
+          amount:
+            payload.amount,
 
-            date:
-              newDate
-          })
-          .eq(
-            'id',
-            item.id
-          );
-      })
-    );
+          note:
+            payload.note,
 
-  const failed =
-    results.find(
-      result =>
-        result.error
-    );
+          date:
+            newDate
+        })
+        .eq(
+          'id',
+          item.id
+        );
 
-  if (failed) {
-    throw failed.error;
+    if (error) {
+      throw error;
+    }
   }
 }
 
-async function deleteFutureSeries(t) {
+async function deleteFutureSeries(
+  t
+) {
   const ids =
     seriesFutureFrom(t)
       .map(
@@ -2170,9 +3934,7 @@ async function deleteFutureSeries(t) {
 
   const { error } =
     await db
-      .from(
-        'transactions'
-      )
+      .from('transactions')
       .delete()
       .in(
         'id',
@@ -2196,15 +3958,13 @@ function sheet(
     Boolean(t?.id);
 
   const initialKind =
-    t?.kind ||
-    '지출';
+    t?.kind || '지출';
 
   const el =
     document
       .createElement('div');
 
-  el.className =
-    'modal';
+  el.className = 'modal';
 
   el.innerHTML = `
     <form class="sheet">
@@ -2217,9 +3977,7 @@ function sheet(
         }
       </h2>
 
-      <label>
-        날짜
-      </label>
+      <label>날짜</label>
 
       <input
         name="date"
@@ -2237,9 +3995,7 @@ function sheet(
         required
       >
 
-      <label>
-        구분
-      </label>
+      <label>구분</label>
 
       <div class="kind">
 
@@ -2266,17 +4022,13 @@ function sheet(
         value="${initialKind}"
       >
 
-      <label>
-        카테고리
-      </label>
+      <label>카테고리</label>
 
       <select
         name="category"
       ></select>
 
-      <label>
-        금액
-      </label>
+      <label>금액</label>
 
       <input
         name="amount"
@@ -2292,9 +4044,7 @@ function sheet(
 
       <small id="preview"></small>
 
-      <label>
-        이름
-      </label>
+      <label>이름</label>
 
       <input
         name="title"
@@ -2306,9 +4056,7 @@ function sheet(
         required
       >
 
-      <label>
-        메모
-      </label>
+      <label>메모</label>
 
       <textarea
         name="note"
@@ -2322,7 +4070,9 @@ function sheet(
         editing &&
         t.repeat_series_id
           ? `
-            <p class="repeat-help">
+            <p
+              class="repeat-help"
+            >
               반복 거래 · ${
                 frequencyLabel(
                   t.repeat_frequency
@@ -2410,6 +4160,11 @@ function sheet(
         kindInput.value
       );
 
+    const selected =
+      normalizedCategory(
+        t?.category
+      );
+
     categorySelect.innerHTML =
       list.map(
         category => `
@@ -2419,7 +4174,7 @@ function sheet(
             }"
             ${
               category ===
-              t?.category
+              selected
                 ? 'selected'
                 : ''
             }
@@ -2463,7 +4218,9 @@ function sheet(
         amountInput.value
           .replace(/,/g, '');
 
-      if (/^\d+$/.test(raw)) {
+      if (
+        /^\d+$/.test(raw)
+      ) {
         amountInput.value =
           num(raw);
 
@@ -2513,7 +4270,7 @@ function sheet(
             '';
         }
       } catch {
-        /* 저장할 때 오류 표시 */
+        /* 저장 시 표시 */
       }
     };
 
@@ -2544,22 +4301,16 @@ function sheet(
 
           title:
             String(
-              data.get(
-                'title'
-              )
+              data.get('title')
             ).trim(),
 
           date:
             makeISO(
-              data.get(
-                'date'
-              )
+              data.get('date')
             ),
 
           kind:
-            data.get(
-              'kind'
-            ),
+            data.get('kind'),
 
           category:
             data.get(
@@ -2568,16 +4319,12 @@ function sheet(
 
           amount:
             calc(
-              data.get(
-                'amount'
-              )
+              data.get('amount')
             ),
 
           note:
             String(
-              data.get(
-                'note'
-              )
+              data.get('note')
             ).trim()
         };
 
@@ -2630,9 +4377,7 @@ function sheet(
                 .from(
                   'transactions'
                 )
-                .update(
-                  payload
-                )
+                .update(payload)
                 .eq(
                   'id',
                   t.id
@@ -2649,9 +4394,7 @@ function sheet(
                   .from(
                     'transactions'
                   )
-                  .update(
-                    payload
-                  )
+                  .update(payload)
                   .eq(
                     'id',
                     t.id
@@ -2661,9 +4404,7 @@ function sheet(
                   .from(
                     'transactions'
                   )
-                  .insert(
-                    payload
-                  );
+                  .insert(payload);
 
           if (result.error) {
             throw result.error;
@@ -2671,7 +4412,6 @@ function sheet(
         }
 
         el.remove();
-
         await load();
 
       } catch (error) {
@@ -2704,7 +4444,7 @@ function sheet(
                 '반복 거래 삭제',
 
               text:
-                '이 거래만 삭제하거나, 이 거래부터 이후 반복 거래를 모두 삭제할 수 있어요.',
+                '삭제 범위를 선택해주세요.',
 
               choices: [
                 {
@@ -2778,13 +4518,10 @@ function sheet(
         }
 
         el.remove();
-
         await load();
 
       } catch (error) {
-        alert(
-          error.message
-        );
+        alert(error.message);
       }
     };
 
@@ -2817,7 +4554,6 @@ function sheet(
       };
 
       el.remove();
-
       sheet(copy);
     };
 
@@ -2835,7 +4571,7 @@ function sheet(
 }
 
 /* =========================================================
-   반복 생성 / 반복 수정
+   반복 생성 / 수정
 ========================================================= */
 
 function openRepeatSheet(
@@ -2860,11 +4596,16 @@ function openRepeatSheet(
       .repeat_frequency ||
     'monthly';
 
+  /*
+    기존 반복 수정 시:
+    현재 선택 거래는 포함하지 않고
+    이후 반복 횟수만 표시.
+  */
   const currentCount =
     existing
       ? Math.max(
-          1,
-          currentSeries.length
+          0,
+          currentSeries.length - 1
         )
       : 12;
 
@@ -2910,22 +4651,10 @@ function openRepeatSheet(
       >
 
         ${[
-          [
-            'daily',
-            '매일'
-          ],
-          [
-            'weekly',
-            '매주'
-          ],
-          [
-            'monthly',
-            '매월'
-          ],
-          [
-            'yearly',
-            '매년'
-          ]
+          ['daily', '매일'],
+          ['weekly', '매주'],
+          ['monthly', '매월'],
+          ['yearly', '매년']
         ].map(
           ([
             value,
@@ -2950,7 +4679,7 @@ function openRepeatSheet(
       <label>
         ${
           existing
-            ? '이 거래부터 반복 횟수'
+            ? '이 거래 이후 반복 횟수'
             : '반복 횟수'
         }
       </label>
@@ -2958,7 +4687,7 @@ function openRepeatSheet(
       <input
         name="count"
         type="number"
-        min="1"
+        min="0"
         max="120"
         value="${currentCount}"
         required
@@ -2967,7 +4696,7 @@ function openRepeatSheet(
       <p class="repeat-help">
         ${
           existing
-            ? '선택한 거래를 1회차로 포함해 이후 일정을 다시 만듭니다.'
+            ? '선택한 거래 이전 기록은 그대로 두고, 이후 반복 일정만 다시 만듭니다.'
             : '현재 거래 다음 회차부터 생성합니다.'
         }
       </p>
@@ -3035,14 +4764,14 @@ function openRepeatSheet(
 
       const count =
         Math.max(
-          1,
+          0,
           Math.min(
             120,
             Number(
               formData.get(
                 'count'
               )
-            ) || 1
+            ) || 0
           )
         );
 
@@ -3057,9 +4786,7 @@ function openRepeatSheet(
             future
               .filter(
                 item =>
-                  String(
-                    item.id
-                  ) !==
+                  String(item.id) !==
                   String(
                     transaction.id
                   )
@@ -3071,9 +4798,7 @@ function openRepeatSheet(
           if (
             laterIds.length
           ) {
-            const {
-              error
-            } =
+            const { error } =
               await db
                 .from(
                   'transactions'
@@ -3095,10 +4820,8 @@ function openRepeatSheet(
             );
 
           const startSequence =
-            Number(
+            repeatSequence(
               transaction
-                .repeat_sequence ||
-              0
             );
 
           const seriesID =
@@ -3140,7 +4863,7 @@ function openRepeatSheet(
 
           for (
             let i = 1;
-            i < count;
+            i <= count;
             i++
           ) {
             const next =
@@ -3165,7 +4888,9 @@ function openRepeatSheet(
                 transaction.kind,
 
               category:
-                transaction.category,
+                normalizedCategory(
+                  transaction.category
+                ),
 
               amount:
                 Number(
@@ -3194,12 +4919,8 @@ function openRepeatSheet(
             });
           }
 
-          if (
-            newRows.length
-          ) {
-            const {
-              error
-            } =
+          if (newRows.length) {
+            const { error } =
               await db
                 .from(
                   'transactions'
@@ -3252,7 +4973,9 @@ function openRepeatSheet(
                 transaction.kind,
 
               category:
-                transaction.category,
+                normalizedCategory(
+                  transaction.category
+                ),
 
               amount:
                 Number(
@@ -3315,19 +5038,21 @@ function openRepeatSheet(
             throw currentError;
           }
 
-          const {
-            error
-          } =
-            await db
-              .from(
-                'transactions'
-              )
-              .insert(
-                rowsToInsert
-              );
+          if (
+            rowsToInsert.length
+          ) {
+            const { error } =
+              await db
+                .from(
+                  'transactions'
+                )
+                .insert(
+                  rowsToInsert
+                );
 
-          if (error) {
-            throw error;
+            if (error) {
+              throw error;
+            }
           }
         }
 
@@ -3441,7 +5166,9 @@ function bindSettings() {
                 t.kind,
 
               category:
-                t.category,
+                normalizedCategory(
+                  t.category
+                ),
 
               amount:
                 t.amount,
@@ -3564,7 +5291,9 @@ function bindSettings() {
               t.kind,
 
             category:
-              t.category,
+              normalizedCategory(
+                t.category
+              ),
 
             amount:
               Number(
@@ -3685,7 +5414,14 @@ user =
   null;
 
 if (user) {
-  await load();
+  try {
+    await load();
+  } catch (error) {
+    root.innerHTML =
+      `DB 오류: ${
+        esc(error.message)
+      }`;
+  }
 } else {
   auth();
 }
