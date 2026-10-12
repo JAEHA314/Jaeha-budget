@@ -46,6 +46,7 @@ let searchQuery = '';
 
 let statKind = '지출';
 let statMode = 'monthly';
+let statDrillMonth = null;
 
 const hiddenStatCategories = new Set();
 
@@ -2583,521 +2584,237 @@ function statColorMap(
   return map;
 }
 
-function monthlyStats(year) {
-  const monthData = [];
-  const categorySet =
-    new Set();
+function statCategoriesForYear(year, kind = statKind) {
+  const present = new Set(
+    transactionsForStatKind(yearly(year), kind)
+      .map(t => normalizedCategory(t.category || '기타'))
+  );
 
-  for (
-    let m = 0;
-    m < 12;
-    m++
-  ) {
-    const items =
-      tx.filter(t => {
-        const d =
-          toDate(t.date);
+  const ordered = kind === '생활수지'
+    ? []
+    : allCategoriesForKind(kind).filter(category => present.has(category));
 
-        return (
-          d.getFullYear() ===
-            year &&
-          d.getMonth() === m
-        );
-      });
-
-    const relevant =
-      transactionsForStatKind(
-        items,
-        statKind
-      );
-
-    const data = {};
-
-    relevant.forEach(t => {
-      const category =
-        normalizedStatCategory(
-          t
-        );
-
-      const value =
-        statCategoryValue(t);
-
-      data[category] =
-        (
-          data[category] ||
-          0
-        ) +
-        value;
-
-      categorySet.add(
-        category
-      );
+  [...present]
+    .sort((a, b) => String(a).localeCompare(String(b), 'ko'))
+    .forEach(category => {
+      if (!ordered.includes(category)) ordered.push(category);
     });
 
-    monthData.push(data);
+  return ordered;
+}
+
+function statColorsForYear(year, kind = statKind) {
+  return statColorMap(statCategoriesForYear(year, kind));
+}
+
+function compactStatMoney(value, signed = false) {
+  const n = Number(value || 0);
+  const abs = Math.abs(n);
+  let text;
+
+  if (abs >= 100000000) {
+    text = `${(abs / 100000000).toFixed(abs >= 1000000000 ? 0 : 1).replace(/\.0$/, '')}억`;
+  } else if (abs >= 10000) {
+    text = `${(abs / 10000).toFixed(abs >= 100000 ? 0 : 1).replace(/\.0$/, '')}만`;
+  } else {
+    text = num(abs);
   }
 
-  const categories =
-    [...categorySet];
+  if (!signed || n === 0) return text;
+  return `${n > 0 ? '+' : '−'}${text}`;
+}
 
-  const colors =
-    statColorMap(categories);
+function monthStatData(year, monthIndex, kind = statKind) {
+  const items = tx.filter(t => {
+    const d = toDate(t.date);
+    return d.getFullYear() === year && d.getMonth() === monthIndex;
+  });
 
-  const activeCategories =
-    categories.filter(
-      category =>
-        !hiddenStatCategories
-          .has(category)
-    );
+  const relevant = transactionsForStatKind(items, kind);
+  const data = {};
 
-  const monthTotals =
-    monthData.map(
-      data =>
-        activeCategories
-          .reduce(
-            (
-              total,
-              category
-            ) =>
-              total +
-              Math.abs(
-                data[category] ||
-                0
-              ),
-            0
-          )
-    );
+  relevant.forEach(t => {
+    const category = normalizedCategory(t.category || '기타');
+    let value = Number(t.amount || 0);
+    if (kind === '투자' && inv(t) === 'buy') value = -value;
+    data[category] = (data[category] || 0) + value;
+  });
 
-  const maxMonthTotal =
-    Math.max(
-      1,
-      ...monthTotals
-    );
+  return { items: relevant, data };
+}
+
+function lifestyleMonthlyStats(year) {
+  const values = Array.from({ length: 12 }, (_, monthIndex) => {
+    const items = tx.filter(t => {
+      const d = toDate(t.date);
+      return d.getFullYear() === year && d.getMonth() === monthIndex;
+    });
+    return sum(items).balance;
+  });
+  const maxAbs = Math.max(1, ...values.map(value => Math.abs(value)));
 
   return `
     <section class="stat-section">
-
-      <h2>
-        월별 ${statKind}
-      </h2>
-
-      <div
-        class="
-          stat-horizontal-chart
-        "
-      >
-
-        ${monthData.map(
-          (
-            data,
-            monthIndex
-          ) => {
-            const total =
-              monthTotals[
-                monthIndex
-              ];
-
-            const barWidth =
-              (
-                total /
-                maxMonthTotal
-              ) * 100;
-
-            return `
-              <div
-                class="
-                  stat-horizontal-month
-                "
-              >
-
-                <span
-                  class="
-                    stat-horizontal-label
-                  "
-                >
-                  ${
-                    monthIndex + 1
-                  }월
-                </span>
-
-                <div
-                  class="
-                    stat-horizontal-track
-                  "
-                >
-
-                  <div
-                    class="
-                      stat-horizontal-stack
-                    "
-                    style="
-                      width:${barWidth}%
-                    "
-                  >
-
-                    ${activeCategories
-                      .map(category => {
-                        const value =
-                          Math.abs(
-                            data[
-                              category
-                            ] ||
-                            0
-                          );
-
-                        if (
-                          !value ||
-                          !total
-                        ) {
-                          return '';
-                        }
-
-                        const width =
-                          (
-                            value /
-                            total
-                          ) * 100;
-
-                        return `
-                          <i
-                            class="
-                              stat-horizontal-segment
-                              stat-color-${
-                                colors.get(
-                                  category
-                                )
-                              }
-                            "
-                            style="
-                              width:${width}%
-                            "
-                            title="${
-                              esc(category)
-                            } ${
-                              won(value)
-                            }"
-                          ></i>
-                        `;
-                      })
-                      .join('')}
-
-                  </div>
-
-                </div>
-
-                <span
-                  class="
-                    stat-horizontal-total
-                  "
-                >
-                  ${
-                    total
-                      ? num(total)
-                      : ''
-                  }
-                </span>
-
+      <h2>월별 생활수지</h2>
+      <div class="cashflow-chart">
+        ${values.map((value, monthIndex) => {
+          const width = Math.abs(value) / maxAbs * 50;
+          return `
+            <div class="cashflow-row">
+              <span class="cashflow-month">${monthIndex + 1}월</span>
+              <div class="cashflow-plot">
+                <i class="cashflow-zero"></i>
+                ${value < 0 ? `<i class="cashflow-bar negative" style="width:${width}%"></i>` : ''}
+                ${value > 0 ? `<i class="cashflow-bar positive" style="width:${width}%"></i>` : ''}
               </div>
-            `;
-          }
-        ).join('')}
-
+              <strong class="cashflow-value ${value > 0 ? 'positive' : value < 0 ? 'negative' : ''}">
+                ${compactStatMoney(value, true)}
+              </strong>
+            </div>`;
+        }).join('')}
       </div>
+    </section>`;
+}
 
-      ${
-        categories.length
-          ? `
-            <div
-              class="
-                stat-legend
-                stat-filter-legend
-              "
-            >
+function monthlyStats(year) {
+  if (statKind === '생활수지') return lifestyleMonthlyStats(year);
 
-              ${categories.map(
-                category => `
-                  <button
-                    type="button"
-                    data-stat-category="${
-                      esc(category)
-                    }"
-                    class="${
-                      hiddenStatCategories
-                        .has(category)
-                        ? 'off'
-                        : ''
-                    }"
-                  >
+  const categories = statCategoriesForYear(year, statKind);
+  const colors = statColorsForYear(year, statKind);
+  const activeCategories = categories.filter(category => !hiddenStatCategories.has(category));
+  const monthData = Array.from({ length: 12 }, (_, monthIndex) => monthStatData(year, monthIndex, statKind).data);
+  const maxValue = Math.max(
+    1,
+    ...monthData.flatMap(data => activeCategories.map(category => Math.abs(data[category] || 0)))
+  );
 
-                    <i
-                      class="
-                        stat-color-${
-                          colors.get(
-                            category
-                          )
-                        }
-                      "
-                    ></i>
+  return `
+    <section class="stat-section">
+      <h2>월별 ${statKind}</h2>
+      <div class="stat-month-groups">
+        ${monthData.map((data, monthIndex) => {
+          const visible = activeCategories.filter(category => Math.abs(data[category] || 0) > 0);
+          return `
+            <button type="button" class="stat-month-group" data-stat-month="${monthIndex}">
+              <span class="stat-month-label">${monthIndex + 1}월</span>
+              <span class="stat-month-bars">
+                ${visible.length ? visible.map(category => {
+                  const value = data[category] || 0;
+                  const width = Math.abs(value) / maxValue * 100;
+                  return `
+                    <span class="stat-category-line" title="${esc(category)} ${won(Math.abs(value))}">
+                      <i class="stat-category-bar stat-color-${colors.get(category)}" style="width:${width}%"></i>
+                    </span>`;
+                }).join('') : '<span class="stat-month-empty">—</span>'}
+              </span>
+            </button>`;
+        }).join('')}
+      </div>
+      ${categories.length ? `
+        <div class="stat-legend stat-filter-legend">
+          ${categories.map(category => `
+            <button type="button" data-stat-category="${esc(category)}" class="${hiddenStatCategories.has(category) ? 'off' : ''}">
+              <i class="stat-color-${colors.get(category)}"></i><span>${esc(category)}</span>
+            </button>`).join('')}
+        </div>` : ''}
+    </section>`;
+}
 
-                    <span>
-                      ${esc(category)}
-                    </span>
+function monthlyStatDetail(year, monthIndex) {
+  const { data } = monthStatData(year, monthIndex, statKind);
+  const categories = statCategoriesForYear(year, statKind);
+  const colors = statColorsForYear(year, statKind);
+  const entries = categories
+    .map(category => [category, data[category] || 0])
+    .filter(([, value]) => Math.abs(value) > 0)
+    .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
+  const total = entries.reduce((sumValue, [, value]) => sumValue + Math.abs(value), 0);
+  const maxValue = Math.max(1, ...entries.map(([, value]) => Math.abs(value)));
 
-                  </button>
-                `
-              ).join('')}
-
-            </div>
-          `
-          : ''
-      }
-
-    </section>
-  `;
+  return `
+    <section class="stat-section stat-drilldown">
+      <button type="button" class="stat-back" id="statBack">‹ 월별로 돌아가기</button>
+      <div class="stat-detail-summary">
+        <span>이 달 총${statKind}</span>
+        <strong>${won(total)}</strong>
+      </div>
+      <h2>${year}년 ${monthIndex + 1}월 ${statKind}</h2>
+      ${entries.length ? `
+        <div class="stat-detail-list">
+          ${entries.map(([category, value]) => `
+            <button type="button" class="stat-detail-row" data-stat-detail-category="${esc(category)}">
+              <span class="stat-detail-head">
+                <span><i class="category-dot stat-color-${colors.get(category)}"></i><b>${esc(category)}</b></span>
+                <strong>${statKind === '투자' ? signedMoney(value) : won(Math.abs(value))}</strong>
+              </span>
+              <span class="stat-detail-track">
+                <i class="stat-color-${colors.get(category)}" style="width:${Math.abs(value) / maxValue * 100}%"></i>
+              </span>
+            </button>`).join('')}
+        </div>` : '<div class="empty">통계 데이터가 없어요.</div>'}
+    </section>`;
 }
 
 function categoryStats(year) {
-  const totals =
-    categoryTotalsForYear(
-      year,
-      statKind
-    );
-
-  const entries =
-    Object
-      .entries(totals)
-      .sort(
-        (a, b) =>
-          Math.abs(b[1]) -
-          Math.abs(a[1])
-      );
-
-  const colors =
-    statColorMap(
-      entries.map(
-        ([category]) =>
-          category
-      )
-    );
-
-  const totalAbsolute =
-    entries.reduce(
-      (
-        total,
-        [, value]
-      ) =>
-        total +
-        Math.abs(value),
-      0
-    );
+  const totals = categoryTotalsForYear(year, statKind);
+  const entries = Object.entries(totals).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
+  const colors = statColorsForYear(year, statKind);
+  const totalAbsolute = entries.reduce((total, [, value]) => total + Math.abs(value), 0);
 
   if (!entries.length) {
-    return `
-      <section
-        class="stat-section"
-      >
-        <h2>
-          항목별 ${statKind}
-        </h2>
-
-        <div class="empty">
-          통계 데이터가 없어요.
-        </div>
-      </section>
-    `;
+    return `<section class="stat-section"><h2>항목별 ${statKind}</h2><div class="empty">통계 데이터가 없어요.</div></section>`;
   }
 
   return `
     <section class="stat-section">
-
-      <h2>
-        항목별 ${statKind}
-      </h2>
-
-      <div
-        class="
-          category-stat-list
-        "
-      >
-
-        ${entries.map(
-          ([
-            category,
-            value
-          ]) => {
-            const ratio =
-              totalAbsolute
-                ? (
-                    Math.abs(value) /
-                    totalAbsolute
-                  ) * 100
-                : 0;
-
-            return `
-              <div
-                class="
-                  category-stat-row
-                "
-              >
-
-                <div
-                  class="
-                    category-stat-head
-                  "
-                >
-
-                  <div>
-
-                    <i
-                      class="
-                        category-dot
-                        stat-color-${
-                          colors.get(
-                            category
-                          )
-                        }
-                      "
-                    ></i>
-
-                    <b>
-                      ${esc(category)}
-                    </b>
-
-                  </div>
-
-                  <strong>
-                    ${
-                      statKind ===
-                        '생활수지' ||
-                      statKind ===
-                        '투자'
-                        ? signedMoney(
-                            value
-                          )
-                        : won(value)
-                    }
-                  </strong>
-
-                </div>
-
-                <div
-                  class="
-                    category-stat-track
-                  "
-                >
-                  <i
-                    class="
-                      stat-color-${
-                        colors.get(
-                          category
-                        )
-                      }
-                    "
-                    style="
-                      width:${ratio}%
-                    "
-                  ></i>
-                </div>
-
-                <small>
-                  ${
-                    ratio.toFixed(1)
-                  }%
-                </small>
-
+      <h2>항목별 ${statKind}</h2>
+      <div class="category-stat-list">
+        ${entries.map(([category, value]) => {
+          const ratio = totalAbsolute ? Math.abs(value) / totalAbsolute * 100 : 0;
+          const colorIndex = colors.has(category) ? colors.get(category) : 23;
+          return `
+            <div class="category-stat-row">
+              <div class="category-stat-head">
+                <div><i class="category-dot stat-color-${colorIndex}"></i><b>${esc(category)}</b></div>
+                <strong>${statKind === '투자' ? signedMoney(value) : won(value)}</strong>
               </div>
-            `;
-          }
-        ).join('')}
-
+              <div class="category-stat-track"><i class="stat-color-${colorIndex}" style="width:${ratio}%"></i></div>
+              <small>${ratio.toFixed(1)}%</small>
+            </div>`;
+        }).join('')}
       </div>
-
-    </section>
-  `;
+    </section>`;
 }
 
 function stats() {
-  const year =
-    month.getFullYear();
+  const year = month.getFullYear();
+  const lifestyle = statKind === '생활수지';
 
   return `
     <section class="stats-page">
-
       <div class="statTabs">
-
-        ${[
-          '수입',
-          '지출',
-          '저축',
-          '투자',
-          '생활수지'
-        ].map(item => `
-          <button
-            data-stat="${item}"
-            class="${
-              statKind === item
-                ? 'on'
-                : ''
-            }"
-          >
-            ${item}
-          </button>
-        `).join('')}
-
+        ${['수입', '지출', '저축', '투자', '생활수지'].map(item => `
+          <button data-stat="${item}" class="${statKind === item ? 'on' : ''}">${item}</button>`).join('')}
       </div>
 
-      <div
-        class="stat-mode-tabs"
-      >
-
-        <button
-          data-stat-mode="monthly"
-          class="${
-            statMode === 'monthly'
-              ? 'on'
-              : ''
-          }"
-        >
-          월별
-        </button>
-
-        <button
-          data-stat-mode="category"
-          class="${
-            statMode === 'category'
-              ? 'on'
-              : ''
-          }"
-        >
-          항목별
-        </button>
-
-      </div>
+      ${!lifestyle && statDrillMonth === null ? `
+        <div class="stat-mode-tabs">
+          <button data-stat-mode="monthly" class="${statMode === 'monthly' ? 'on' : ''}">월별</button>
+          <button data-stat-mode="category" class="${statMode === 'category' ? 'on' : ''}">항목별</button>
+        </div>` : ''}
 
       <div class="year">
-
-        <button id="py">
-          ‹
-        </button>
-
-        <b>
-          ${year}년
-        </b>
-
-        <button id="ny">
-          ›
-        </button>
-
+        <button id="py">‹</button><b>${year}년</b><button id="ny">›</button>
       </div>
 
-      ${
-        statMode === 'monthly'
-          ? monthlyStats(year)
-          : categoryStats(year)
-      }
-
-    </section>
-  `;
+      ${!lifestyle && statDrillMonth !== null
+        ? monthlyStatDetail(year, statDrillMonth)
+        : lifestyle
+          ? lifestyleMonthlyStats(year)
+          : statMode === 'monthly'
+            ? monthlyStats(year)
+            : categoryStats(year)}
+    </section>`;
 }
 
 /* =========================================================
@@ -3466,9 +3183,13 @@ function bind() {
         statKind =
           button.dataset.stat;
 
+        statDrillMonth = null;
+        if (statKind === '생활수지') statMode = 'monthly';
+
         hiddenStatCategories
           .clear();
 
+        statDrillMonth = null;
         render();
       };
     });
@@ -3483,7 +3204,39 @@ function bind() {
           button.dataset
             .statMode;
 
+        statDrillMonth = null;
         render();
+      };
+    });
+
+  root
+    .querySelectorAll('[data-stat-month]')
+    .forEach(button => {
+      button.onclick = () => {
+        statDrillMonth = Number(button.dataset.statMonth);
+        render();
+      };
+    });
+
+  root.querySelector('#statBack')
+    ?.addEventListener('click', () => {
+      statDrillMonth = null;
+      render();
+    });
+
+  root
+    .querySelectorAll('[data-stat-detail-category]')
+    .forEach(button => {
+      button.onclick = () => {
+        historyMode = 'month';
+        historyDate = new Date(month.getFullYear(), statDrillMonth, 1, 12);
+        filter = statKind;
+        categoryFilter = button.dataset.statDetailCategory;
+        searchQuery = '';
+        view = '내역';
+        statDrillMonth = null;
+        render();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       };
     });
 
@@ -3528,6 +3281,7 @@ function bind() {
         hiddenStatCategories
           .clear();
 
+        statDrillMonth = null;
         render();
       }
     );
@@ -3548,6 +3302,7 @@ function bind() {
         hiddenStatCategories
           .clear();
 
+        statDrillMonth = null;
         render();
       }
     );
