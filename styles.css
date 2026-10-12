@@ -4052,3 +4052,206 @@ svg {
     ) !important;
   }
 }
+
+
+/* =========================================================
+   FINAL SCREEN-FIT FIX
+========================================================= */
+
+.stats-page,
+.stat-section,
+.stat-month-chart,
+.stat-month-group,
+.stat-month-bars,
+.stat-month-bar-line,
+.stat-month-bar-space {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+.stats-page,
+.stat-section {
+  overflow-x: clip;
+}
+
+/* 일반 월별: 막대+금액이 화면 안에서 끝남 */
+.stat-standard-bar-wrap {
+  position: relative;
+  display: block;
+  height: 100%;
+  max-width: 82%;
+}
+
+.stat-standard-bar-wrap .stat-month-bar {
+  width: 100% !important;
+}
+
+.stat-standard-bar-wrap small {
+  position: absolute !important;
+  top: 50% !important;
+  left: 100% !important;
+  right: auto !important;
+  transform: translate(4px, -50%) !important;
+  width: max-content !important;
+  white-space: nowrap !important;
+  color: #888 !important;
+  font-size: 6px !important;
+  line-height: 1 !important;
+}
+
+/* 투자 월별: 양쪽 모두 막대 끝에 금액, 화면 밖 금지 */
+.investment-month-chart .stat-bipolar-side {
+  min-width: 0;
+  max-width: 50%;
+}
+
+.investment-month-chart .stat-bipolar-bar-wrap {
+  position: relative;
+  display: block;
+  max-width: 64%;
+  height: 100%;
+}
+
+.investment-month-chart
+.stat-bipolar-bar-wrap
+.stat-month-bar {
+  width: 100% !important;
+}
+
+.investment-month-chart
+.negative-side
+.stat-bipolar-bar-wrap {
+  margin-left: auto;
+}
+
+.investment-month-chart
+.positive-side
+.stat-bipolar-bar-wrap {
+  margin-right: auto;
+}
+
+.investment-month-chart
+.negative-side
+.stat-bipolar-bar-wrap small {
+  position: absolute !important;
+  top: 50% !important;
+  right: 100% !important;
+  left: auto !important;
+  transform: translate(-4px, -50%) !important;
+  width: max-content !important;
+  white-space: nowrap !important;
+  text-align: right;
+  font-size: 5.8px !important;
+}
+
+.investment-month-chart
+.positive-side
+.stat-bipolar-bar-wrap small {
+  position: absolute !important;
+  top: 50% !important;
+  left: 100% !important;
+  right: auto !important;
+  transform: translate(4px, -50%) !important;
+  width: max-content !important;
+  white-space: nowrap !important;
+  text-align: left;
+  font-size: 5.8px !important;
+}
+
+/* 생활수지: 넓어진 월 간격에 맞춘 막대 두께 */
+.lifestyle-stat-section .cashflow-bar {
+  height: 11px !important;
+  border-radius: 999px !important;
+}
+
+/* 설정 화면 */
+.settings-page {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 6px 0 40px;
+}
+
+.settings-page > h1 {
+  margin: 0 0 24px;
+  font-size: 22px;
+}
+
+.settings-group {
+  margin-bottom: 16px;
+  padding: 18px;
+  border-radius: 18px;
+  background: #f7f7f8;
+}
+
+.settings-group h2 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+.settings-help,
+.settings-account,
+.settings-message {
+  margin: 0;
+  color: #777;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.settings-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.settings-actions button,
+.settings-file-button,
+.settings-danger {
+  min-height: 42px;
+  padding: 0 15px;
+  border: 0;
+  border-radius: 12px;
+  background: #e8e8ea;
+  color: #222;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.settings-file-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.settings-file-button input {
+  display: none;
+}
+
+.settings-danger {
+  margin-top: 15px;
+  background: #fff0ef;
+  color: #e23b32;
+}
+
+.settings-message {
+  min-height: 20px;
+  margin-top: 10px;
+}
+
+@media (max-width: 430px) {
+  .stat-standard-bar-wrap {
+    max-width: 80%;
+  }
+
+  .investment-month-chart
+  .stat-bipolar-bar-wrap {
+    max-width: 60%;
+  }
+
+  .lifestyle-stat-section
+  .cashflow-bar {
+    height: 12px !important;
+  }
+}
