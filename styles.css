@@ -91,6 +91,67 @@ svg {
 
 
 /* =========================================================
+   APP LOADING
+========================================================= */
+
+.app-loading {
+  position: fixed;
+  z-index: 9999;
+  inset: 0;
+
+  display: grid;
+  place-items: center;
+
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+
+  margin: 0;
+  padding: 0;
+
+  background: #ffffff;
+}
+
+.app-loading-logo {
+  display: grid;
+  place-items: center;
+
+  width: 64px;
+  height: 64px;
+
+  color: #2b2b2b;
+}
+
+.app-loading-logo svg {
+  display: block;
+
+  width: 64px;
+  height: 64px;
+
+  overflow: visible;
+}
+
+.app-loading-text {
+  position: absolute;
+
+  overflow: hidden;
+
+  width: 1px;
+  height: 1px;
+
+  padding: 0;
+  margin: -1px;
+
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+
+  white-space: nowrap;
+
+  border: 0;
+}
+
+
+/* =========================================================
    APP SHELL
 ========================================================= */
 
@@ -1596,104 +1657,32 @@ svg {
 
 /* =========================================================
    STAT CATEGORY COLORS
-   24 DISTINCT COLORS
 ========================================================= */
 
-.stat-color-0 {
-  background: #007aff;
-}
-
-.stat-color-1 {
-  background: #ff9500;
-}
-
-.stat-color-2 {
-  background: #34c759;
-}
-
-.stat-color-3 {
-  background: #ff3b30;
-}
-
-.stat-color-4 {
-  background: #af52de;
-}
-
-.stat-color-5 {
-  background: #00c7be;
-}
-
-.stat-color-6 {
-  background: #5856d6;
-}
-
-.stat-color-7 {
-  background: #ff2d55;
-}
-
-.stat-color-8 {
-  background: #32ade6;
-}
-
-.stat-color-9 {
-  background: #a2845e;
-}
-
-.stat-color-10 {
-  background: #ffcc00;
-}
-
-.stat-color-11 {
-  background: #30b0c7;
-}
-
-.stat-color-12 {
-  background: #bf5af2;
-}
-
-.stat-color-13 {
-  background: #ff9f0a;
-}
-
-.stat-color-14 {
-  background: #64d2ff;
-}
-
-.stat-color-15 {
-  background: #5e5ce6;
-}
-
-.stat-color-16 {
-  background: #ff375f;
-}
-
-.stat-color-17 {
-  background: #66d4cf;
-}
-
-.stat-color-18 {
-  background: #30d158;
-}
-
-.stat-color-19 {
-  background: #ff453a;
-}
-
-.stat-color-20 {
-  background: #0a84ff;
-}
-
-.stat-color-21 {
-  background: #ac8e68;
-}
-
-.stat-color-22 {
-  background: #ffd60a;
-}
-
-.stat-color-23 {
-  background: #8e8e93;
-}
+.stat-color-0 { background: #007aff; }
+.stat-color-1 { background: #ff9500; }
+.stat-color-2 { background: #34c759; }
+.stat-color-3 { background: #ff3b30; }
+.stat-color-4 { background: #af52de; }
+.stat-color-5 { background: #00c7be; }
+.stat-color-6 { background: #5856d6; }
+.stat-color-7 { background: #ff2d55; }
+.stat-color-8 { background: #32ade6; }
+.stat-color-9 { background: #a2845e; }
+.stat-color-10 { background: #ffcc00; }
+.stat-color-11 { background: #30b0c7; }
+.stat-color-12 { background: #bf5af2; }
+.stat-color-13 { background: #ff9f0a; }
+.stat-color-14 { background: #64d2ff; }
+.stat-color-15 { background: #5e5ce6; }
+.stat-color-16 { background: #ff375f; }
+.stat-color-17 { background: #66d4cf; }
+.stat-color-18 { background: #30d158; }
+.stat-color-19 { background: #ff453a; }
+.stat-color-20 { background: #0a84ff; }
+.stat-color-21 { background: #ac8e68; }
+.stat-color-22 { background: #ffd60a; }
+.stat-color-23 { background: #8e8e93; }
 
 
 /* =========================================================
@@ -2154,8 +2143,6 @@ svg {
     font-size: 19px;
   }
 
-  /* 월 이동 */
-
   .month {
     margin-top: 15px;
     margin-bottom: 15px;
@@ -2164,8 +2151,6 @@ svg {
   .month b {
     font-size: 15px;
   }
-
-  /* 생활수지 */
 
   .balance {
     min-height: 132px;
@@ -2185,8 +2170,6 @@ svg {
   .balance b {
     font-size: 34px;
   }
-
-  /* 홈 요약 */
 
   .home-summary {
     grid-template-columns:
@@ -2233,8 +2216,6 @@ svg {
 
     letter-spacing: -0.035em;
   }
-
-  /* 내역 */
 
   .history-top-row,
   .history-bottom-row {
@@ -2329,11 +2310,6 @@ svg {
 
     font-size: 12px;
   }
-
-  /* =====================================================
-     MOBILE CALENDAR
-     7열 전체 표시
-  ===================================================== */
 
   main:has(.calendar) {
     overflow-x: visible;
@@ -2510,10 +2486,6 @@ svg {
     white-space: nowrap;
     text-overflow: ellipsis;
   }
-
-  /* =====================================================
-     MOBILE STATISTICS
-  ===================================================== */
 
   .statTabs {
     width: 100%;
