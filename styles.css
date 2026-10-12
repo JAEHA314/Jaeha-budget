@@ -3645,3 +3645,56 @@ svg {
     height: clamp(320px, 43vh, 395px);
   }
 }
+
+
+/* =========================================================
+   STAT FIX 2026-10-13 B
+========================================================= */
+
+/* 카테고리 지정 색상 */
+.stat-color-24 { background: #ff8fb3 !important; } /* 데이트비: 연분홍 */
+.stat-color-25 { background: #ff5a36 !important; } /* 통신요금: 주황빛 빨강 */
+.stat-color-26 { background: #7a5cff !important; } /* 여가생활비: 보라 */
+
+/* 항목별 막대: span을 실제 block track으로 만들어 색 막대가 보이게 함 */
+.category-stat-track {
+  display: block !important;
+  width: 100% !important;
+  height: 7px !important;
+  margin-top: 7px;
+  overflow: visible !important;
+  background: transparent !important;
+}
+
+.category-stat-track > i {
+  display: block !important;
+  height: 7px !important;
+  min-width: 2px;
+  border-radius: 999px;
+}
+
+/* 월별: 카테고리 수가 적을수록 막대가 확실히 두꺼워짐 */
+.stat-month-chart.stat-density-1 .stat-month-bar { height: 12px !important; }
+.stat-month-chart.stat-density-2 .stat-month-bar { height: 9px !important; }
+.stat-month-chart.stat-density-3 .stat-month-bar { height: 7px !important; }
+.stat-month-chart.stat-density-4 .stat-month-bar { height: 6px !important; }
+.stat-month-chart.stat-density-5 .stat-month-bar { height: 5px !important; }
+.stat-month-chart.stat-density-6 .stat-month-bar { height: 4px !important; }
+.stat-month-chart.stat-density-7 .stat-month-bar { height: 3.5px !important; }
+.stat-month-chart.stat-density-8 .stat-month-bar { height: 3px !important; }
+.stat-month-chart.stat-density-9 .stat-month-bar { height: 2.5px !important; }
+
+.stat-month-chart.stat-density-1 .stat-month-bars { gap: 4px !important; }
+.stat-month-chart.stat-density-2 .stat-month-bars { gap: 3px !important; }
+.stat-month-chart.stat-density-3 .stat-month-bars { gap: 2.5px !important; }
+.stat-month-chart.stat-density-4 .stat-month-bars { gap: 2px !important; }
+.stat-month-chart.stat-density-5 .stat-month-bars { gap: 1.5px !important; }
+.stat-month-chart.stat-density-6 .stat-month-bars,
+.stat-month-chart.stat-density-7 .stat-month-bars,
+.stat-month-chart.stat-density-8 .stat-month-bars,
+.stat-month-chart.stat-density-9 .stat-month-bars { gap: 1px !important; }
+
+/* 한 개짜리 전체 선택/해제 버튼 */
+.stat-legend-actions {
+  justify-content: flex-end;
+}
