@@ -2789,78 +2789,612 @@ svg {
   }
 }
 
+
 /* =========================================================
-   STATISTICS - MOBILE MONTH GROUPS / DRILLDOWN / CASHFLOW
+   FINAL STATISTICS / CALENDAR REFINEMENTS
+   2026-10-13
 ========================================================= */
 
-.stat-month-groups {
+/* 캘린더 구분선 더 연하게 */
+.week {
+  border-top-color: #f3f3f3;
+  border-left-color: #f3f3f3;
+  border-right-color: #f3f3f3;
+}
+
+.week span {
+  border-right-color: #f3f3f3;
+}
+
+.calendar {
+  border-top-color: #f3f3f3;
+  border-left-color: #f3f3f3;
+}
+
+.day {
+  border-right-color: #f3f3f3;
+  border-bottom-color: #f3f3f3;
+}
+
+/* 월별 카테고리 그래프 */
+.stat-month-chart {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+
   width: 100%;
 }
 
 .stat-month-group {
   display: grid;
-  grid-template-columns: 42px minmax(0, 1fr);
-  align-items: stretch;
-  gap: 10px;
+  grid-template-columns:
+    30px
+    minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+
   width: 100%;
-  min-height: 32px;
-  padding: 5px 0;
+  min-width: 0;
+
+  padding: 0;
+
   border: 0;
-  border-radius: 9px;
   background: transparent;
+
+  color: inherit;
+  font: inherit;
   text-align: left;
+
   cursor: pointer;
 }
 
-.stat-month-group:hover { background: #fafafa; }
-.stat-month-label { align-self: center; color: #777; font-size: 10px; font-weight: 600; text-align: right; }
-.stat-month-bars { display: flex; flex-direction: column; justify-content: center; gap: 3px; min-width: 0; }
-.stat-category-line { display: block; width: 100%; height: 6px; border-radius: 999px; background: #f2f2f3; overflow: hidden; }
-.stat-category-bar { display: block; height: 100%; min-width: 2px; border-radius: inherit; }
-.stat-month-empty { color: #bbb; font-size: 10px; }
+.stat-month-label {
+  color: #777;
 
-.cashflow-chart { display: flex; flex-direction: column; gap: 10px; width: 100%; padding: 5px 0; }
-.cashflow-row { display: grid; grid-template-columns: 38px minmax(0, 1fr) 58px; align-items: center; gap: 8px; min-height: 24px; }
-.cashflow-month { color: #777; font-size: 10px; font-weight: 600; text-align: right; }
-.cashflow-plot { position: relative; height: 14px; min-width: 0; }
-.cashflow-zero { position: absolute; top: -2px; bottom: -2px; left: 50%; width: 1px; background: #d7d7d9; transform: translateX(-.5px); }
-.cashflow-bar { position: absolute; top: 3px; height: 8px; border-radius: 4px; }
-.cashflow-bar.positive { left: 50%; background: var(--positive); }
-.cashflow-bar.negative { right: 50%; background: var(--negative); }
-.cashflow-value { overflow: hidden; color: #999; font-size: 9px; font-weight: 650; white-space: nowrap; text-overflow: ellipsis; }
-.cashflow-value.positive { color: var(--positive); }
-.cashflow-value.negative { color: var(--negative); }
+  font-size: 9px;
+  font-weight: 550;
 
-.stat-back { margin: 0 0 15px; padding: 0; border: 0; background: transparent; color: #777; font-size: 11px; cursor: pointer; }
-.stat-detail-summary { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 24px; padding: 18px 19px; border-radius: 18px; background: #f1f1f2; }
-.stat-detail-summary span { color: #555; font-size: 12px; font-weight: 550; }
-.stat-detail-summary strong { color: #222; font-size: 18px; font-weight: 750; letter-spacing: -.03em; white-space: nowrap; }
-.stat-detail-list { display: flex; flex-direction: column; gap: 17px; }
-.stat-detail-row { display: block; width: 100%; padding: 0; border: 0; background: transparent; text-align: left; cursor: pointer; }
-.stat-detail-head { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-bottom: 7px; }
-.stat-detail-head > span { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.stat-detail-head b { overflow: hidden; color: #444; font-size: 11px; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; }
-.stat-detail-head strong { flex: 0 0 auto; color: #333; font-size: 11px; font-weight: 650; white-space: nowrap; }
-.stat-detail-track { display: block; overflow: hidden; width: 100%; height: 9px; border-radius: 999px; background: #f0f0f0; }
-.stat-detail-track i { display: block; height: 100%; border-radius: inherit; }
-.stat-detail-row:hover .stat-detail-track { background: #e9e9e9; }
-
-@media (max-width: 700px) {
-  .stat-month-group { grid-template-columns: 28px minmax(0, 1fr); gap: 7px; padding: 4px 0; }
-  .stat-month-label { font-size: 8.5px; }
-  .stat-month-bars { gap: 2.5px; }
-  .stat-category-line { height: 5px; }
-  .cashflow-row { grid-template-columns: 27px minmax(0, 1fr) 52px; gap: 6px; }
-  .cashflow-month { font-size: 8.5px; }
-  .cashflow-value { font-size: 8px; }
-  .stat-detail-summary { padding: 16px; border-radius: 16px; }
-  .stat-detail-summary strong { font-size: 16px; }
+  text-align: right;
+  white-space: nowrap;
 }
 
-@media (max-width: 370px) {
-  .cashflow-row { grid-template-columns: 24px minmax(0, 1fr) 46px; gap: 4px; }
-  .cashflow-value { font-size: 7px; }
+.stat-month-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  min-width: 0;
+}
+
+.stat-month-bar-line {
+  position: relative;
+
+  display: block;
+
+  width: 100%;
+  height: 5px;
+
+  background: transparent;
+}
+
+.stat-month-bar {
+  display: block;
+
+  max-width: calc(100% - 42px);
+  height: 3px;
+
+  border-radius: 999px;
+}
+
+.stat-month-bar-line small {
+  position: absolute;
+  top: 50%;
+  left: min(
+    calc(100% - 39px),
+    calc(var(--bar-end, 0%) + 4px)
+  );
+
+  transform: translateY(-50%);
+
+  color: #8d8d8d;
+
+  font-size: 6.5px;
+  font-weight: 550;
+  line-height: 1;
+
+  white-space: nowrap;
+}
+
+.stat-month-empty {
+  display: block;
+  height: 5px;
+}
+
+/* 범례 + 전체 선택/해제 */
+.stat-legend-wrap {
+  margin-top: 14px;
+}
+
+.stat-legend-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+
+  margin-bottom: 5px;
+
+  color: #aaa;
+
+  font-size: 8.5px;
+}
+
+.stat-legend-actions button {
+  padding: 2px 0;
+
+  border: 0;
+  background: transparent;
+  color: #777;
+
+  font-size: 8.5px;
+  font-weight: 550;
+
+  cursor: pointer;
+}
+
+.stat-legend-wrap .stat-legend {
+  margin-top: 0;
+}
+
+/* 월 상세 */
+.stat-drill-head {
+  position: relative;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 32px;
+  margin-bottom: 12px;
+}
+
+.stat-drill-head h2 {
+  margin: 0;
+}
+
+.stat-drill-back {
+  position: absolute;
+  left: 0;
+
+  display: grid;
+  place-items: center;
+
+  width: 32px;
+  height: 32px;
+
+  padding: 0;
+
+  border: 0;
+  border-radius: 50%;
+
+  background: transparent;
+  color: #555;
+
+  font-size: 24px;
+
+  cursor: pointer;
+}
+
+.stat-drill-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+
+  margin-bottom: 20px;
+  padding: 12px 14px;
+
+  border-radius: 10px;
+
+  background: #f5f5f5;
+}
+
+.stat-drill-summary span {
+  color: #666;
+
+  font-size: 11px;
+  font-weight: 550;
+}
+
+.stat-drill-summary strong {
+  color: #222;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  white-space: nowrap;
+}
+
+.stat-drill-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.stat-drill-row {
+  display: block;
+
+  width: 100%;
+
+  padding: 0;
+
+  border: 0;
+  background: transparent;
+
+  color: inherit;
+  text-align: left;
+
+  cursor: pointer;
+}
+
+.stat-drill-row-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  margin-bottom: 6px;
+}
+
+.stat-drill-row-head > span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+
+  min-width: 0;
+}
+
+.stat-drill-row-head b {
+  overflow: hidden;
+
+  color: #444;
+
+  font-size: 11px;
+  font-weight: 600;
+
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.stat-drill-row-head strong {
+  flex: 0 0 auto;
+
+  color: #333;
+
+  font-size: 11px;
+  font-weight: 650;
+
+  white-space: nowrap;
+}
+
+.stat-drill-track {
+  display: block;
+
+  width: 100%;
+  height: 5px;
+
+  background: transparent;
+}
+
+.stat-drill-track i {
+  display: block;
+
+  height: 4px;
+
+  border-radius: 999px;
+}
+
+/* 항목별 그래프 전체 행 클릭 가능 */
+.category-stat-row.category-stat-link {
+  display: block;
+
+  padding: 0;
+
+  border: 0;
+  background: transparent;
+
+  color: inherit;
+  font: inherit;
+  text-align: left;
+
+  cursor: pointer;
+}
+
+.category-stat-row.category-stat-link
+  .category-stat-head {
+  width: 100%;
+}
+
+.category-stat-row.category-stat-link
+  .category-stat-head > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  min-width: 0;
+}
+
+/* 생활수지 */
+.cashflow-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  width: 100%;
+}
+
+.cashflow-month-row {
+  display: grid;
+  grid-template-columns:
+    32px
+    minmax(0, 1fr)
+    96px;
+  align-items: center;
+  gap: 8px;
+
+  min-width: 0;
+}
+
+.cashflow-month-label {
+  color: #777;
+
+  font-size: 10px;
+  font-weight: 550;
+
+  text-align: right;
+}
+
+.cashflow-track {
+  position: relative;
+
+  width: 100%;
+  height: 8px;
+}
+
+.cashflow-zero {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  left: 50%;
+
+  width: 1px;
+
+  background: #e5e5e5;
+}
+
+.cashflow-bar {
+  position: absolute;
+  top: 1px;
+
+  height: 6px;
+
+  border-radius: 999px;
+}
+
+.cashflow-bar.positive {
+  left: 50%;
+  background: #007aff;
+}
+
+.cashflow-bar.negative {
+  right: 50%;
+  background: #ff3b30;
+}
+
+.cashflow-value {
+  font-size: 9px;
+  font-weight: 650;
+
+  text-align: right;
+  white-space: nowrap;
+}
+
+.cashflow-value.positive,
+.annual-cashflow-summary
+  strong.positive {
+  color: #007aff;
+}
+
+.cashflow-value.negative,
+.annual-cashflow-summary
+  strong.negative {
+  color: #ff3b30;
+}
+
+.cashflow-value.zero,
+.annual-cashflow-summary
+  strong.zero {
+  color: #888;
+}
+
+.annual-cashflow-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+
+  margin-top: 22px;
+  padding: 13px 14px;
+
+  border-radius: 10px;
+
+  background: #f5f5f5;
+}
+
+.annual-cashflow-summary span {
+  color: #555;
+
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.annual-cashflow-summary strong {
+  font-size: 12px;
+  font-weight: 700;
+
+  white-space: nowrap;
+}
+
+/* 회색 트랙 제거 */
+.stat-horizontal-track,
+.category-stat-track {
+  background: transparent;
+}
+
+/* 기존 항목별 막대는 조금 얇게 */
+.category-stat-track {
+  height: 6px;
+}
+
+/* 모바일: 12개월을 한 화면에서 비교할 수 있도록 압축 */
+@media (max-width: 700px) {
+  .stat-section {
+    margin-top: 11px;
+  }
+
+  .stat-section h2 {
+    margin-bottom: 10px;
+  }
+
+  .stat-month-chart {
+    gap: 4px;
+  }
+
+  .stat-month-group {
+    grid-template-columns:
+      25px
+      minmax(0, 1fr);
+
+    gap: 6px;
+  }
+
+  .stat-month-label {
+    font-size: 8.5px;
+  }
+
+  .stat-month-bars {
+    gap: 1px;
+  }
+
+  .stat-month-bar-line {
+    height: 3px;
+  }
+
+  .stat-month-bar {
+    max-width: calc(100% - 37px);
+    height: 2px;
+  }
+
+  .stat-month-bar-line small {
+    font-size: 5.8px;
+  }
+
+  .stat-legend-wrap {
+    margin-top: 9px;
+  }
+
+  .stat-legend {
+    gap: 3px 5px;
+  }
+
+  .stat-legend button {
+    min-height: 18px;
+
+    padding: 2px 4px;
+
+    font-size: 7.5px;
+  }
+
+  .stat-legend button i {
+    width: 6px;
+    height: 6px;
+  }
+
+  .cashflow-chart {
+    gap: 12px;
+  }
+
+  .cashflow-month-row {
+    grid-template-columns:
+      26px
+      minmax(0, 1fr)
+      91px;
+
+    gap: 6px;
+  }
+
+  .cashflow-month-label {
+    font-size: 9.5px;
+  }
+
+  .cashflow-value {
+    font-size: 8.5px;
+  }
+
+  .cashflow-track {
+    height: 7px;
+  }
+
+  .cashflow-bar {
+    height: 5px;
+  }
+}
+
+@media (max-width: 430px) {
+  .stat-month-chart {
+    gap: 3px;
+  }
+
+  .stat-month-group {
+    grid-template-columns:
+      23px
+      minmax(0, 1fr);
+
+    gap: 5px;
+  }
+
+  .stat-month-label {
+    font-size: 8px;
+  }
+
+  .stat-month-bars {
+    gap: 0;
+  }
+
+  .stat-month-bar-line {
+    height: 2.6px;
+  }
+
+  .stat-month-bar {
+    max-width: calc(100% - 34px);
+    height: 1.8px;
+  }
+
+  .stat-month-bar-line small {
+    font-size: 5.4px;
+  }
+
+  .cashflow-month-row {
+    grid-template-columns:
+      24px
+      minmax(0, 1fr)
+      88px;
+  }
+}
+
+
+@media (max-width: 700px) {
+  .stat-month-bar-line small {
+    left: auto;
+    right: 0;
+  }
 }
