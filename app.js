@@ -2929,24 +2929,33 @@ function monthlyStats(year) {
                                       ${
                                         value < 0
                                           ? `
-                                            <i
+                                            <span
                                               class="
-                                                stat-month-bar
-                                                stat-color-${
-                                                  colors.get(
-                                                    category
-                                                  )
-                                                }
+                                                stat-bipolar-bar-wrap
                                               "
                                               style="
                                                 width:${
-                                                  width * 2
+                                                  Math.min(
+                                                    64,
+                                                    width * 2
+                                                  )
                                                 }%
                                               "
-                                            ></i>
-                                            <small>
-                                              ${amount}
-                                            </small>
+                                            >
+                                              <i
+                                                class="
+                                                  stat-month-bar
+                                                  stat-color-${
+                                                    colors.get(
+                                                      category
+                                                    )
+                                                  }
+                                                "
+                                              ></i>
+                                              <small>
+                                                ${amount}
+                                              </small>
+                                            </span>
                                           `
                                           : ''
                                       }
@@ -2961,24 +2970,33 @@ function monthlyStats(year) {
                                       ${
                                         value > 0
                                           ? `
-                                            <i
+                                            <span
                                               class="
-                                                stat-month-bar
-                                                stat-color-${
-                                                  colors.get(
-                                                    category
-                                                  )
-                                                }
+                                                stat-bipolar-bar-wrap
                                               "
                                               style="
                                                 width:${
-                                                  width * 2
+                                                  Math.min(
+                                                    64,
+                                                    width * 2
+                                                  )
                                                 }%
                                               "
-                                            ></i>
-                                            <small>
-                                              ${amount}
-                                            </small>
+                                            >
+                                              <i
+                                                class="
+                                                  stat-month-bar
+                                                  stat-color-${
+                                                    colors.get(
+                                                      category
+                                                    )
+                                                  }
+                                                "
+                                              ></i>
+                                              <small>
+                                                ${amount}
+                                              </small>
+                                            </span>
                                           `
                                           : ''
                                       }
@@ -2999,30 +3017,29 @@ function monthlyStats(year) {
                                     stat-month-bar-space
                                   "
                                 >
-                                  <i
+                                  <span
                                     class="
-                                      stat-month-bar
-                                      stat-color-${
-                                        colors.get(
-                                          category
-                                        )
-                                      }
+                                      stat-standard-bar-wrap
                                     "
                                     style="
                                       width:${width}%
                                     "
-                                  ></i>
-
-                                  <small
-                                    class="
-                                      stat-bar-end-value
-                                    "
-                                    style="
-                                      left:${width}%
-                                    "
                                   >
-                                    ${amount}
-                                  </small>
+                                    <i
+                                      class="
+                                        stat-month-bar
+                                        stat-color-${
+                                          colors.get(
+                                            category
+                                          )
+                                        }
+                                      "
+                                    ></i>
+
+                                    <small>
+                                      ${amount}
+                                    </small>
+                                  </span>
                                 </span>
                               </span>
                             `;
@@ -3713,6 +3730,53 @@ function stats() {
    렌더
 ========================================================= */
 
+function settingsHTML() {
+  return `
+    <section class="settings-page">
+      <h1>설정</h1>
+
+      <section class="settings-group">
+        <h2>데이터 백업</h2>
+        <p class="settings-help">
+          거래내역과 가계부 설정을 JSON 파일로 저장하거나 복원합니다.
+        </p>
+
+        <div class="settings-actions">
+          <button type="button" id="export">
+            백업 파일 저장
+          </button>
+
+          <label class="settings-file-button">
+            백업 파일 불러오기
+            <input
+              id="import"
+              type="file"
+              accept="application/json,.json"
+            >
+          </label>
+        </div>
+
+        <p id="datamsg" class="settings-message"></p>
+      </section>
+
+      <section class="settings-group">
+        <h2>계정</h2>
+        <p class="settings-account">
+          ${user?.email ? esc(user.email) : ''}
+        </p>
+
+        <button
+          type="button"
+          id="logout"
+          class="settings-danger"
+        >
+          로그아웃
+        </button>
+      </section>
+    </section>
+  `;
+}
+
 function render() {
   let content = '';
 
@@ -4080,33 +4144,54 @@ function bind() {
 
   root
     .querySelector(
-      '[data-stat-show-all]'
+      '[data-stat-toggle-all]'
     )
     ?.addEventListener(
       'click',
       () => {
-        hiddenStatCategories
-          .clear();
+        const categories =
+          statCategoryUniverse(
+            statKind
+          ).filter(category =>
+            tx.some(t => {
+              const d =
+                toDate(t.date);
 
-        render();
-      }
-    );
+              return (
+                d.getFullYear() ===
+                  month.getFullYear() &&
+                transactionsForStatKind(
+                  [t],
+                  statKind
+                ).length > 0 &&
+                normalizedStatCategory(
+                  t
+                ) === category
+              );
+            })
+          );
 
-  root
-    .querySelector(
-      '[data-stat-hide-all]'
-    )
-    ?.addEventListener(
-      'click',
-      () => {
-        statCategoryUniverse(
-          statKind
-        ).forEach(
-          category => {
-            hiddenStatCategories
-              .add(category);
-          }
-        );
+        const allHidden =
+          categories.length > 0 &&
+          categories.every(
+            category =>
+              hiddenStatCategories
+                .has(category)
+          );
+
+        if (allHidden) {
+          categories.forEach(
+            category =>
+              hiddenStatCategories
+                .delete(category)
+          );
+        } else {
+          categories.forEach(
+            category =>
+              hiddenStatCategories
+                .add(category)
+          );
+        }
 
         render();
       }
@@ -5770,298 +5855,263 @@ function openRepeatSheet(
 
 function bindSettings() {
   root
-    .querySelector(
-      '#logout'
-    )
-    .onclick =
-    () =>
-      db.auth.signOut();
-
-  const imp =
-    root.querySelector(
-      '#import'
+    .querySelector('#logout')
+    ?.addEventListener(
+      'click',
+      async () => {
+        await db.auth.signOut();
+      }
     );
 
-  imp.onchange =
-    async () => {
-      const file =
-        imp.files[0];
+  const imp =
+    root.querySelector('#import');
 
-      if (!file) {
-        return;
-      }
+  if (imp) {
+    imp.onchange =
+      async () => {
+        const file =
+          imp.files?.[0];
 
-      if (
-        !confirm(
-          '현재 데이터를 지우고 이 JSON으로 덮어쓸까요?'
-        )
-      ) {
-        return;
-      }
-
-      const msg =
-        root.querySelector(
-          '#datamsg'
-        );
-
-      try {
-        const snap =
-          JSON.parse(
-            await file.text()
-          );
+        if (!file) return;
 
         if (
-          !Array.isArray(
-            snap.transactions
+          !confirm(
+            '현재 데이터를 지우고 이 JSON으로 덮어쓸까요?'
           )
         ) {
-          throw new Error(
-            '지원하지 않는 파일'
-          );
+          imp.value = '';
+          return;
         }
 
-        const removeResult =
-          await db
-            .from(
-              'transactions'
-            )
-            .delete()
-            .eq(
-              'user_id',
-              user.id
+        const msg =
+          root.querySelector('#datamsg');
+
+        try {
+          const snap =
+            JSON.parse(
+              await file.text()
             );
 
-        if (
-          removeResult.error
-        ) {
-          throw (
-            removeResult.error
-          );
+          if (
+            !Array.isArray(
+              snap.transactions
+            )
+          ) {
+            throw new Error(
+              '지원하지 않는 백업 파일입니다.'
+            );
+          }
+
+          const removeResult =
+            await db
+              .from('transactions')
+              .delete()
+              .eq(
+                'user_id',
+                user.id
+              );
+
+          if (removeResult.error) {
+            throw removeResult.error;
+          }
+
+          const items =
+            snap.transactions.map(
+              t => ({
+                user_id: user.id,
+                title: t.title,
+                date: t.date,
+                kind:
+                  t.kindRawValue ||
+                  t.kind,
+                category:
+                  normalizedCategory(
+                    t.category
+                  ),
+                amount:
+                  Number(t.amount || 0),
+                note: t.note || '',
+                created_at:
+                  t.createdAt ||
+                  new Date()
+                    .toISOString(),
+                repeat_series_id:
+                  t.repeatSeriesID ||
+                  null,
+                repeat_frequency:
+                  t.repeatFrequencyRawValue ||
+                  null,
+                repeat_interval:
+                  t.repeatInterval ||
+                  1,
+                repeat_sequence:
+                  t.repeatSequence ||
+                  0,
+                repeat_anchor_date:
+                  t.repeatAnchorDate ||
+                  null
+              })
+            );
+
+          for (
+            let i = 0;
+            i < items.length;
+            i += 200
+          ) {
+            const { error } =
+              await db
+                .from('transactions')
+                .insert(
+                  items.slice(
+                    i,
+                    i + 200
+                  )
+                );
+
+            if (error) throw error;
+          }
+
+          const { error } =
+            await db
+              .from('settings')
+              .upsert({
+                user_id: user.id,
+                custom_categories:
+                  snap.customCategories ||
+                  [],
+                monthly_budgets:
+                  snap.monthlyBudgets ||
+                  [],
+                savings_goals:
+                  snap.savingsGoals ||
+                  [],
+                updated_at:
+                  new Date()
+                    .toISOString()
+              });
+
+          if (error) throw error;
+
+          if (msg) {
+            msg.textContent =
+              `복원 완료: ${items.length}건`;
+          }
+
+          imp.value = '';
+          await load();
+
+        } catch (error) {
+          if (msg) {
+            msg.textContent =
+              `복원 실패: ${error.message}`;
+          }
         }
+      };
+  }
 
-        const items =
-          snap.transactions
-            .map(t => ({
-              user_id:
-                user.id,
+  root
+    .querySelector('#export')
+    ?.addEventListener(
+      'click',
+      () => {
+        const snap = {
+          formatVersion: 2,
+          exportedAt:
+            new Date()
+              .toISOString(),
 
-              title:
-                t.title,
-
-              date:
-                t.date,
-
-              kind:
-                t.kindRawValue ||
-                t.kind,
-
+          transactions:
+            tx.map(t => ({
+              title: t.title,
+              date: t.date,
+              kindRawValue: t.kind,
               category:
                 normalizedCategory(
                   t.category
                 ),
-
               amount:
-                t.amount,
+                Number(t.amount),
+              note: t.note || '',
+              createdAt:
+                t.created_at,
+              repeatSeriesID:
+                t.repeat_series_id,
+              repeatFrequencyRawValue:
+                t.repeat_frequency,
+              repeatInterval:
+                t.repeat_interval,
+              repeatSequence:
+                t.repeat_sequence,
+              repeatAnchorDate:
+                t.repeat_anchor_date
+            })),
 
-              note:
-                t.note || '',
+          customCategories:
+            settings
+              .custom_categories ||
+            [],
 
-              created_at:
-                t.createdAt ||
-                new Date()
-                  .toISOString(),
+          monthlyBudgets:
+            settings
+              .monthly_budgets ||
+            [],
 
-              repeat_series_id:
-                t.repeatSeriesID ||
+          savingsGoals:
+            settings
+              .savings_goals ||
+            []
+        };
+
+        const blob =
+          new Blob(
+            [
+              JSON.stringify(
+                snap,
                 null,
-
-              repeat_frequency:
-                t.repeatFrequencyRawValue ||
-                null,
-
-              repeat_interval:
-                t.repeatInterval ||
-                1,
-
-              repeat_sequence:
-                t.repeatSequence ||
-                0,
-
-              repeat_anchor_date:
-                t.repeatAnchorDate ||
-                null
-            }));
-
-        for (
-          let i = 0;
-          i < items.length;
-          i += 200
-        ) {
-          const { error } =
-            await db
-              .from(
-                'transactions'
+                2
               )
-              .insert(
-                items.slice(
-                  i,
-                  i + 200
-                )
-              );
+            ],
+            {
+              type:
+                'application/json'
+            }
+          );
 
-          if (error) {
-            throw error;
-          }
+        const url =
+          URL.createObjectURL(blob);
+
+        const a =
+          document.createElement('a');
+
+        a.href = url;
+        a.download =
+          `jaeha-budget-backup-${
+            new Date()
+              .toISOString()
+              .slice(0, 10)
+          }.json`;
+
+        document.body
+          .appendChild(a);
+
+        a.click();
+        a.remove();
+
+        setTimeout(
+          () =>
+            URL.revokeObjectURL(url),
+          0
+        );
+
+        const msg =
+          root.querySelector('#datamsg');
+
+        if (msg) {
+          msg.textContent =
+            '백업 파일을 저장했습니다.';
         }
-
-        const { error } =
-          await db
-            .from(
-              'settings'
-            )
-            .upsert({
-              user_id:
-                user.id,
-
-              custom_categories:
-                snap
-                  .customCategories ||
-                [],
-
-              monthly_budgets:
-                [],
-
-              savings_goals:
-                snap
-                  .savingsGoals ||
-                [],
-
-              updated_at:
-                new Date()
-                  .toISOString()
-            });
-
-        if (error) {
-          throw error;
-        }
-
-        msg.textContent =
-          `완료: ${items.length}건`;
-
-        await load();
-
-      } catch (error) {
-        msg.textContent =
-          `실패: ${error.message}`;
       }
-    };
-
-  root
-    .querySelector(
-      '#export'
-    )
-    .onclick =
-    () => {
-      const snap = {
-        formatVersion: 1,
-
-        exportedAt:
-          new Date()
-            .toISOString(),
-
-        transactions:
-          tx.map(t => ({
-            title:
-              t.title,
-
-            date:
-              t.date,
-
-            kindRawValue:
-              t.kind,
-
-            category:
-              normalizedCategory(
-                t.category
-              ),
-
-            amount:
-              Number(
-                t.amount
-              ),
-
-            note:
-              t.note,
-
-            createdAt:
-              t.created_at,
-
-            repeatSeriesID:
-              t.repeat_series_id,
-
-            repeatFrequencyRawValue:
-              t.repeat_frequency,
-
-            repeatInterval:
-              t.repeat_interval,
-
-            repeatSequence:
-              t.repeat_sequence,
-
-            repeatAnchorDate:
-              t.repeat_anchor_date
-          })),
-
-        customCategories:
-          settings
-            .custom_categories ||
-          [],
-
-        savingsGoals:
-          settings
-            .savings_goals ||
-          []
-      };
-
-      const blob =
-        new Blob(
-          [
-            JSON.stringify(
-              snap,
-              null,
-              2
-            )
-          ],
-          {
-            type:
-              'application/json'
-          }
-        );
-
-      const url =
-        URL.createObjectURL(
-          blob
-        );
-
-      const a =
-        document
-          .createElement('a');
-
-      a.href = url;
-
-      a.download =
-        `JaehaBudget_${
-          new Date()
-            .toISOString()
-            .slice(0, 10)
-        }.json`;
-
-      a.click();
-
-      URL.revokeObjectURL(
-        url
-      );
-    };
+    );
 }
 
 /* =========================================================
