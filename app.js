@@ -1,5 +1,5 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
- 
+
 /* =========================================================
    기본 설정
 ========================================================= */
@@ -2718,9 +2718,7 @@ function statLegend(
 
 function monthlyStats(year) {
   const universe =
-    statCategoryUniverse(
-      statKind
-    );
+    statCategoryUniverse(statKind);
 
   const colors =
     statColorMap(universe);
@@ -2731,78 +2729,75 @@ function monthlyStats(year) {
       () => ({})
     );
 
-  for (
-    let m = 0;
-    m < 12;
-    m++
-  ) {
+  for (let m = 0; m < 12; m++) {
     const items =
       tx.filter(t => {
-        const d =
-          toDate(t.date);
+        const d = toDate(t.date);
 
         return (
-          d.getFullYear() ===
-            year &&
+          d.getFullYear() === year &&
           d.getMonth() === m
         );
       });
 
-    const relevant =
-      transactionsForStatKind(
-        items,
-        statKind
-      );
-
-    relevant.forEach(t => {
+    transactionsForStatKind(
+      items,
+      statKind
+    ).forEach(t => {
       const category =
-        normalizedStatCategory(
-          t
-        );
-
-      const value =
-        statCategoryValue(t);
+        normalizedStatCategory(t);
 
       monthData[m][category] =
         (
-          monthData[m][category] ||
-          0
-        ) +
-        value;
+          monthData[m][category] || 0
+        ) + statCategoryValue(t);
     });
   }
 
   const categories =
-    universe.filter(
-      category =>
-        monthData.some(
-          data =>
-            Math.abs(
-              data[category] || 0
-            ) > 0
-        )
+    universe.filter(category =>
+      monthData.some(data =>
+        Math.abs(
+          data[category] || 0
+        ) > 0
+      )
     );
 
   const activeCategories =
-    categories.filter(
-      category =>
-        !hiddenStatCategories
-          .has(category)
+    categories.filter(category =>
+      !hiddenStatCategories.has(
+        category
+      )
     );
 
   const maxValue =
     Math.max(
       1,
-      ...monthData.flatMap(
-        data =>
-          activeCategories.map(
-            category =>
-              Math.abs(
-                data[category] || 0
-              )
-          )
+      ...monthData.flatMap(data =>
+        activeCategories.map(
+          category =>
+            Math.abs(
+              data[category] || 0
+            )
+        )
       )
     );
+
+  const maxVisiblePerMonth =
+    Math.max(
+      1,
+      ...monthData.map(data =>
+        activeCategories.filter(
+          category =>
+            Math.abs(
+              data[category] || 0
+            ) > 0
+        ).length
+      )
+    );
+
+  const investment =
+    statKind === '투자';
 
   return `
     <section class="stat-section">
@@ -2812,132 +2807,239 @@ function monthlyStats(year) {
       </h2>
 
       <div
-        class="stat-month-chart stat-density-${
-          Math.min(
-            9,
-            Math.max(
-              1,
-              activeCategories.length
+        class="
+          stat-month-chart
+          stat-density-${
+            Math.min(
+              9,
+              maxVisiblePerMonth
             )
-          )
-        }"
-        style="--stat-category-count:${
-          Math.max(
-            1,
-            activeCategories.length
-          )
-        }"
+          }
+          ${
+            investment
+              ? 'investment-month-chart'
+              : ''
+          }
+        "
+        style="
+          --stat-category-count:${
+            maxVisiblePerMonth
+          }
+        "
       >
 
         ${monthData.map(
-          (
-            data,
-            monthIndex
-          ) => `
-            <button
-              type="button"
-              class="stat-month-group"
-              data-stat-month="${
-                monthIndex
-              }"
-              aria-label="${
-                year
-              }년 ${
-                monthIndex + 1
-              }월 ${statKind} 상세 보기"
-            >
-              <span
-                class="stat-month-label"
+          (data, monthIndex) => {
+            const monthCategories =
+              activeCategories.filter(
+                category =>
+                  Math.abs(
+                    data[category] || 0
+                  ) > 0
+              );
+
+            return `
+              <button
+                type="button"
+                class="stat-month-group"
+                data-stat-month="${
+                  monthIndex
+                }"
+                aria-label="${
+                  year
+                }년 ${
+                  monthIndex + 1
+                }월 ${statKind} 상세 보기"
               >
-                ${monthIndex + 1}월
-              </span>
+                <span
+                  class="stat-month-label"
+                >
+                  ${monthIndex + 1}월
+                </span>
 
-              <span
-                class="stat-month-bars"
-              >
-                ${
-                  activeCategories.length
-                    ? activeCategories
-                        .map(category => {
-                          const value =
-                            data[
-                              category
-                            ] || 0;
+                <span
+                  class="stat-month-bars"
+                >
+                  ${
+                    monthCategories.length
+                      ? monthCategories
+                          .map(category => {
+                            const value =
+                              data[category];
 
-                          const absolute =
-                            Math.abs(value);
+                            const absolute =
+                              Math.abs(value);
 
-                          const width =
-                            absolute
-                              ? Math.max(
-                                  1.2,
-                                  (
-                                    absolute /
-                                    maxValue
-                                  ) * 100
+                            const width =
+                              Math.max(
+                                1.5,
+                                (
+                                  absolute /
+                                  maxValue
+                                ) * (
+                                  investment
+                                    ? 50
+                                    : 100
                                 )
-                              : 0;
+                              );
 
-                          return `
-                            <span
-                              class="
-                                stat-month-bar-line
-                              "
-                            >
+                            const amount =
+                              `${
+                                investment &&
+                                value < 0
+                                  ? '−'
+                                  : ''
+                              }${
+                                compactStatMoney(
+                                  absolute
+                                )
+                              }`;
+
+                            if (investment) {
+                              return `
+                                <span
+                                  class="
+                                    stat-month-bar-line
+                                    bipolar
+                                    ${
+                                      value < 0
+                                        ? 'negative'
+                                        : 'positive'
+                                    }
+                                  "
+                                >
+                                  <span
+                                    class="
+                                      stat-month-bar-space
+                                      bipolar-space
+                                    "
+                                  >
+                                    <i
+                                      class="
+                                        stat-month-zero
+                                      "
+                                    ></i>
+
+                                    <span
+                                      class="
+                                        stat-bipolar-side
+                                        negative-side
+                                      "
+                                    >
+                                      ${
+                                        value < 0
+                                          ? `
+                                            <i
+                                              class="
+                                                stat-month-bar
+                                                stat-color-${
+                                                  colors.get(
+                                                    category
+                                                  )
+                                                }
+                                              "
+                                              style="
+                                                width:${
+                                                  width * 2
+                                                }%
+                                              "
+                                            ></i>
+                                            <small>
+                                              ${amount}
+                                            </small>
+                                          `
+                                          : ''
+                                      }
+                                    </span>
+
+                                    <span
+                                      class="
+                                        stat-bipolar-side
+                                        positive-side
+                                      "
+                                    >
+                                      ${
+                                        value > 0
+                                          ? `
+                                            <i
+                                              class="
+                                                stat-month-bar
+                                                stat-color-${
+                                                  colors.get(
+                                                    category
+                                                  )
+                                                }
+                                              "
+                                              style="
+                                                width:${
+                                                  width * 2
+                                                }%
+                                              "
+                                            ></i>
+                                            <small>
+                                              ${amount}
+                                            </small>
+                                          `
+                                          : ''
+                                      }
+                                    </span>
+                                  </span>
+                                </span>
+                              `;
+                            }
+
+                            return `
                               <span
                                 class="
-                                  stat-month-bar-space
+                                  stat-month-bar-line
                                 "
                               >
-                                <i
+                                <span
                                   class="
-                                    stat-month-bar
-                                    stat-color-${
-                                    colors.get(
-                                      category
-                                    )
-                                  }
-                                "
-                                  style="
-                                    width:${width}%
+                                    stat-month-bar-space
                                   "
-                                ></i>
-                              </span>
-
-                              ${
-                                absolute
-                                  ? `
-                                    <small>
-                                      ${
-                                        statKind ===
-                                          '투자' &&
-                                        value < 0
-                                          ? '−'
-                                          : ''
-                                      }${
-                                        compactStatMoney(
-                                          absolute
+                                >
+                                  <i
+                                    class="
+                                      stat-month-bar
+                                      stat-color-${
+                                        colors.get(
+                                          category
                                         )
                                       }
-                                    </small>
-                                  `
-                                  : ''
-                              }
-                            </span>
-                          `;
-                        })
-                        .join('')
-                    : `
-                      <span
-                        class="
-                          stat-month-empty
-                        "
-                      ></span>
-                    `
-                }
-              </span>
-            </button>
-          `
+                                    "
+                                    style="
+                                      width:${width}%
+                                    "
+                                  ></i>
+
+                                  <small
+                                    class="
+                                      stat-bar-end-value
+                                    "
+                                    style="
+                                      left:${width}%
+                                    "
+                                  >
+                                    ${amount}
+                                  </small>
+                                </span>
+                              </span>
+                            `;
+                          })
+                          .join('')
+                      : `
+                        <span
+                          class="
+                            stat-month-empty
+                          "
+                        ></span>
+                      `
+                  }
+                </span>
+              </button>
+            `;
+          }
         ).join('')}
 
       </div>
@@ -3203,18 +3305,15 @@ function categoryStats(year) {
 
   const entries =
     universe
-      .filter(
-        category =>
-          Math.abs(
-            totals[category] || 0
-          ) > 0
-      )
-      .map(
-        category => [
-          category,
+      .filter(category =>
+        Math.abs(
           totals[category] || 0
-        ]
+        ) > 0
       )
+      .map(category => [
+        category,
+        totals[category] || 0
+      ])
       .sort(
         (a, b) =>
           Math.abs(b[1]) -
@@ -3223,24 +3322,6 @@ function categoryStats(year) {
 
   const totalAbsolute =
     entries.reduce(
-      (
-        total,
-        [, value]
-      ) =>
-        total +
-        Math.abs(value),
-      0
-    );
-
-  const visibleEntries =
-    entries.filter(
-      ([category]) =>
-        !hiddenStatCategories
-          .has(category)
-    );
-
-  const visibleAbsolute =
-    visibleEntries.reduce(
       (total, [, value]) =>
         total + Math.abs(value),
       0
@@ -3248,9 +3329,7 @@ function categoryStats(year) {
 
   if (!entries.length) {
     return `
-      <section
-        class="stat-section"
-      >
+      <section class="stat-section">
         <h2>
           항목별 ${statKind}
         </h2>
@@ -3269,114 +3348,92 @@ function categoryStats(year) {
         항목별 ${statKind}
       </h2>
 
-      ${
-        visibleEntries.length
-          ? `
-            <div
-              class="
-                category-stat-list
-              "
-            >
-              ${visibleEntries.map(
-                ([
-                  category,
-                  value
-                ]) => {
-                  const ratio =
-                    visibleAbsolute
-                      ? (
-                          Math.abs(value) /
-                          visibleAbsolute
-                        ) * 100
-                      : 0;
+      <div class="category-stat-list">
 
-                  return `
-                    <button
-                      type="button"
+        ${entries.map(
+          ([category, value]) => {
+            const ratio =
+              totalAbsolute
+                ? (
+                    Math.abs(value) /
+                    totalAbsolute
+                  ) * 100
+                : 0;
+
+            return `
+              <button
+                type="button"
+                class="
+                  category-stat-row
+                  category-stat-link
+                "
+                data-stat-year-category="${
+                  esc(category)
+                }"
+              >
+                <span
+                  class="
+                    category-stat-head
+                  "
+                >
+                  <span>
+                    <i
                       class="
-                        category-stat-row
-                        category-stat-link
+                        category-dot
+                        stat-color-${
+                          colors.get(
+                            category
+                          )
+                        }
                       "
-                      data-stat-year-category="${
-                        esc(category)
-                      }"
-                    >
-                      <span
-                        class="
-                          category-stat-head
-                        "
-                      >
-                        <span>
-                          <i
-                            class="
-                              category-dot
-                              stat-color-${
-                                colors.get(
-                                  category
-                                )
-                              }
-                            "
-                          ></i>
+                    ></i>
 
-                          <b>
-                            ${esc(category)}
-                          </b>
-                        </span>
+                    <b>
+                      ${esc(category)}
+                    </b>
+                  </span>
 
-                        <strong>
-                          ${
-                            statKind ===
-                              '투자'
-                              ? signedMoney(
-                                  value
-                                )
-                              : won(value)
-                          }
-                        </strong>
-                      </span>
+                  <strong>
+                    ${
+                      statKind ===
+                        '투자'
+                        ? signedMoney(
+                            value
+                          )
+                        : won(value)
+                    }
+                  </strong>
+                </span>
 
-                      <span
-                        class="
-                          category-stat-track
-                        "
-                      >
-                        <i
-                          class="
-                            stat-color-${
-                              colors.get(
-                                category
-                              )
-                            }
-                          "
-                          style="
-                            width:${ratio}%
-                          "
-                        ></i>
-                      </span>
+                <span
+                  class="
+                    category-stat-track
+                  "
+                >
+                  <i
+                    class="
+                      category-stat-fill
+                      stat-color-${
+                        colors.get(
+                          category
+                        )
+                      }
+                    "
+                    style="
+                      width:${ratio}%
+                    "
+                  ></i>
+                </span>
 
-                      <small>
-                        ${ratio.toFixed(1)}%
-                      </small>
-                    </button>
-                  `;
-                }
-              ).join('')}
-            </div>
-          `
-          : `
-            <div class="empty">
-              표시할 카테고리를 선택하세요.
-            </div>
-          `
-      }
+                <small>
+                  ${ratio.toFixed(1)}%
+                </small>
+              </button>
+            `;
+          }
+        ).join('')}
 
-      ${statLegend(
-        entries.map(
-          ([category]) =>
-            category
-        ),
-        colors
-      )}
+      </div>
 
     </section>
   `;
@@ -3434,7 +3491,7 @@ function lifestyleMonthlyStats(
     );
 
   return `
-    <section class="stat-section">
+    <section class="stat-section lifestyle-stat-section">
 
       <h2>
         월별 생활수지
