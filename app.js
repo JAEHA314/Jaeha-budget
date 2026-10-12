@@ -2566,20 +2566,41 @@ const STAT_COLOR_COUNT = 24;
 function statColorMap(
   categories
 ) {
-  const map =
-    new Map();
+  const map = new Map();
+
+  const preferred = new Map([
+    ['데이트비', 24],
+    ['통신요금', 25],
+    ['여가생활비', 26]
+  ]);
+
+  const reserved =
+    new Set(preferred.values());
+
+  let nextColor = 0;
 
   [
     ...new Set(categories)
-  ].forEach(
-    (category, index) => {
+  ].forEach(category => {
+    if (preferred.has(category)) {
       map.set(
         category,
-        index %
-          STAT_COLOR_COUNT
+        preferred.get(category)
       );
+      return;
     }
-  );
+
+    while (reserved.has(nextColor)) {
+      nextColor++;
+    }
+
+    map.set(
+      category,
+      nextColor % STAT_COLOR_COUNT
+    );
+
+    nextColor++;
+  });
 
   return map;
 }
@@ -2640,18 +2661,16 @@ function statLegend(
       <div class="stat-legend-actions">
         <button
           type="button"
-          data-stat-show-all
+          data-stat-toggle-all
         >
-          전체 선택
-        </button>
-
-        <span>·</span>
-
-        <button
-          type="button"
-          data-stat-hide-all
-        >
-          전체 해제
+          ${
+            categories.every(
+              category =>
+                hiddenStatCategories.has(category)
+            )
+              ? '전체 선택'
+              : '전체 해제'
+          }
         </button>
       </div>
 
@@ -2793,7 +2812,15 @@ function monthlyStats(year) {
       </h2>
 
       <div
-        class="stat-month-chart"
+        class="stat-month-chart stat-density-${
+          Math.min(
+            9,
+            Math.max(
+              1,
+              activeCategories.length
+            )
+          )
+        }"
         style="--stat-category-count:${
           Math.max(
             1,
@@ -3212,6 +3239,13 @@ function categoryStats(year) {
           .has(category)
     );
 
+  const visibleAbsolute =
+    visibleEntries.reduce(
+      (total, [, value]) =>
+        total + Math.abs(value),
+      0
+    );
+
   if (!entries.length) {
     return `
       <section
@@ -3249,10 +3283,10 @@ function categoryStats(year) {
                   value
                 ]) => {
                   const ratio =
-                    totalAbsolute
+                    visibleAbsolute
                       ? (
                           Math.abs(value) /
-                          totalAbsolute
+                          visibleAbsolute
                         ) * 100
                       : 0;
 
