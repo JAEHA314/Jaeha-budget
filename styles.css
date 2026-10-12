@@ -3698,3 +3698,357 @@ svg {
 .stat-legend-actions {
   justify-content: flex-end;
 }
+
+
+/* =========================================================
+   FINAL STATS REVISION — 2026-10-13
+========================================================= */
+
+/* 이름 기준 고정색: 모든 통계 화면에서 동일 */
+.stat-color-24 {
+  background: #f58fb0 !important;
+} /* 데이트비: 연분홍 */
+
+.stat-color-25 {
+  background: #ff6b35 !important;
+} /* 통신요금: 주황빛 빨강 */
+
+.stat-color-26 {
+  background: #7657d5 !important;
+} /* 여가생활비: 보라 */
+
+
+/* ---------- 월별 공통 ---------- */
+
+.stat-month-chart {
+  --stat-chart-height: clamp(
+    410px,
+    55vh,
+    540px
+  );
+  --stat-month-gap: 8px;
+
+  height: var(--stat-chart-height) !important;
+  gap: var(--stat-month-gap) !important;
+}
+
+.stat-month-group {
+  height: calc(
+    (
+      var(--stat-chart-height) -
+      (11 * var(--stat-month-gap))
+    ) / 12
+  ) !important;
+  min-height: 0 !important;
+}
+
+.stat-month-bars {
+  height: 100% !important;
+  justify-content: center !important;
+  gap: 1px !important;
+}
+
+/* 0원 카테고리는 DOM에서 제거되므로 빈 자리 없음 */
+.stat-month-bar-line {
+  position: relative;
+  display: block !important;
+  flex: 0 0 auto !important;
+  width: 100% !important;
+  min-height: 0 !important;
+}
+
+.stat-month-bar-space {
+  position: relative;
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  overflow: visible !important;
+}
+
+.stat-month-bar {
+  display: block !important;
+  border-radius: 999px;
+}
+
+/* 금액은 오른쪽 정렬 열이 아니라 각 막대 끝을 따라감 */
+.stat-month-bar-line:not(.bipolar)
+.stat-month-bar-space
+.stat-bar-end-value {
+  position: absolute !important;
+  top: 50% !important;
+  right: auto !important;
+  transform:
+    translate(4px, -50%) !important;
+
+  width: auto !important;
+  max-width: none !important;
+
+  font-size: 6.5px !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  text-align: left !important;
+  color: #888 !important;
+}
+
+/* 카테고리 수가 적을수록 실제 막대가 두꺼워짐 */
+.stat-density-1 .stat-month-bar {
+  height: 11px !important;
+}
+.stat-density-2 .stat-month-bar {
+  height: 9px !important;
+}
+.stat-density-3 .stat-month-bar {
+  height: 7px !important;
+}
+.stat-density-4 .stat-month-bar {
+  height: 6px !important;
+}
+.stat-density-5 .stat-month-bar {
+  height: 5px !important;
+}
+.stat-density-6 .stat-month-bar {
+  height: 4px !important;
+}
+.stat-density-7 .stat-month-bar {
+  height: 3.5px !important;
+}
+.stat-density-8 .stat-month-bar {
+  height: 3px !important;
+}
+.stat-density-9 .stat-month-bar {
+  height: 2.5px !important;
+}
+
+/* 한 달 내부는 촘촘하게, 월과 월 사이는 확실히 분리 */
+.stat-density-1 .stat-month-bars {
+  gap: 4px !important;
+}
+.stat-density-2 .stat-month-bars {
+  gap: 3px !important;
+}
+.stat-density-3 .stat-month-bars {
+  gap: 2.5px !important;
+}
+.stat-density-4 .stat-month-bars {
+  gap: 2px !important;
+}
+.stat-density-5 .stat-month-bars,
+.stat-density-6 .stat-month-bars,
+.stat-density-7 .stat-month-bars,
+.stat-density-8 .stat-month-bars,
+.stat-density-9 .stat-month-bars {
+  gap: 1px !important;
+}
+
+
+/* ---------- 투자 월별: 중앙 0 기준 양방향 ---------- */
+
+.investment-month-chart
+.stat-month-bar-line.bipolar {
+  height: auto !important;
+}
+
+.investment-month-chart
+.bipolar-space {
+  position: relative;
+  display: grid !important;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  overflow: visible !important;
+}
+
+.investment-month-chart
+.stat-month-zero {
+  position: absolute;
+  top: -1px;
+  bottom: -1px;
+  left: 50%;
+  width: 1px;
+  background: #e3e3e3;
+  transform: translateX(-0.5px);
+}
+
+.investment-month-chart
+.stat-bipolar-side {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  overflow: visible;
+}
+
+.investment-month-chart
+.negative-side {
+  justify-content: flex-end;
+}
+
+.investment-month-chart
+.positive-side {
+  justify-content: flex-start;
+}
+
+.investment-month-chart
+.negative-side
+.stat-month-bar {
+  margin-left: auto;
+}
+
+.investment-month-chart
+.positive-side
+.stat-month-bar {
+  margin-right: auto;
+}
+
+.investment-month-chart
+.stat-bipolar-side small {
+  position: absolute !important;
+  top: 50% !important;
+  width: auto !important;
+  font-size: 6.5px !important;
+  line-height: 1 !important;
+  color: #888 !important;
+  white-space: nowrap !important;
+}
+
+.investment-month-chart
+.negative-side small {
+  right: 100% !important;
+  left: auto !important;
+  transform:
+    translate(-4px, -50%) !important;
+}
+
+.investment-month-chart
+.positive-side small {
+  left: 100% !important;
+  right: auto !important;
+  transform:
+    translate(4px, -50%) !important;
+}
+
+
+/* ---------- 항목별 ---------- */
+
+/* 하단 선택 범례는 항목별 화면에서 렌더링하지 않음 */
+
+.category-stat-track {
+  position: relative !important;
+  display: block !important;
+  width: 100% !important;
+  height: 8px !important;
+  margin-top: 7px !important;
+  overflow: visible !important;
+  background: transparent !important;
+}
+
+.category-stat-fill {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  height: 8px !important;
+  min-width: 3px !important;
+  border-radius: 999px !important;
+}
+
+
+/* ---------- 생활수지 ---------- */
+
+.lifestyle-stat-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.lifestyle-stat-section
+.annual-cashflow-summary {
+  flex: 0 0 auto;
+  margin-bottom: 12px !important;
+}
+
+.lifestyle-stat-section
+.cashflow-chart {
+  height: clamp(
+    470px,
+    62vh,
+    620px
+  ) !important;
+  flex: 1 1 auto;
+  justify-content: space-between !important;
+  gap: 0 !important;
+}
+
+.lifestyle-stat-section
+.cashflow-month-row {
+  flex: 1 1 0;
+  min-height: 0 !important;
+}
+
+
+/* ---------- 모바일 ---------- */
+
+@media (max-width: 700px) {
+  .stat-month-chart {
+    --stat-chart-height: clamp(
+      400px,
+      54vh,
+      500px
+    );
+    --stat-month-gap: 7px;
+  }
+
+  .stat-month-group {
+    grid-template-columns:
+      25px minmax(0, 1fr) !important;
+    gap: 6px !important;
+  }
+
+  .stat-month-bar-line:not(.bipolar)
+  .stat-month-bar-space
+  .stat-bar-end-value,
+  .investment-month-chart
+  .stat-bipolar-side small {
+    font-size: 6.2px !important;
+  }
+
+  .lifestyle-stat-section
+  .cashflow-chart {
+    height: clamp(
+      455px,
+      60vh,
+      570px
+    ) !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .stat-month-chart {
+    --stat-chart-height: clamp(
+      390px,
+      52vh,
+      475px
+    );
+    --stat-month-gap: 6px;
+  }
+
+  .stat-month-group {
+    grid-template-columns:
+      23px minmax(0, 1fr) !important;
+    gap: 5px !important;
+  }
+
+  .stat-month-bar-line:not(.bipolar)
+  .stat-month-bar-space
+  .stat-bar-end-value,
+  .investment-month-chart
+  .stat-bipolar-side small {
+    font-size: 5.8px !important;
+  }
+
+  .lifestyle-stat-section
+  .cashflow-chart {
+    height: clamp(
+      440px,
+      59vh,
+      545px
+    ) !important;
+  }
+}
