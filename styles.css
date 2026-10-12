@@ -28,6 +28,9 @@
   --calendar-expense: #f7e1e5;
   --calendar-saving: #e1f0e4;
   --calendar-investment: #eae3f3;
+
+  --positive: #007aff;
+  --negative: #ff3b30;
 }
 
 html,
@@ -719,13 +722,8 @@ svg {
   line-height: 1;
 
   white-space: nowrap;
-  word-break: keep-all;
 
   cursor: pointer;
-}
-
-.history-today:hover {
-  background: #e5e5e5;
 }
 
 .history-bottom-row {
@@ -977,10 +975,9 @@ svg {
 }
 
 .day-head {
-  display: grid;
-  grid-template-columns: 28px minmax(0, 1fr) 22px;
+  display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
 
   min-width: 0;
   min-height: 27px;
@@ -990,6 +987,7 @@ svg {
 
 .day-number {
   display: grid;
+  flex: 0 0 auto;
   place-items: center;
 
   width: 27px;
@@ -1015,7 +1013,7 @@ svg {
 }
 
 .day-flow {
-  overflow: hidden;
+  flex: 0 1 auto;
 
   min-width: 0;
   padding: 0;
@@ -1023,37 +1021,44 @@ svg {
   border: 0;
 
   background: transparent;
-  color: #555;
 
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 700;
+  line-height: 1;
 
-  text-align: right;
+  letter-spacing: -0.035em;
+
+  text-align: left;
   white-space: nowrap;
-  text-overflow: ellipsis;
 
   cursor: pointer;
 }
 
 .day-flow.positive {
-  color: #476d8b;
+  color: var(--positive);
 }
 
 .day-flow.negative {
-  color: #875d62;
+  color: var(--negative);
 }
 
 .day-flow.zero {
   color: #999;
 }
 
+.day-flow-spacer {
+  flex: 1 1 auto;
+}
+
 .day-add {
   display: grid;
+  flex: 0 0 auto;
   place-items: center;
 
   width: 21px;
   height: 21px;
 
+  margin-left: auto;
   padding: 0;
 
   border: 0;
@@ -1347,7 +1352,7 @@ svg {
 .stat-horizontal-chart {
   display: flex;
   flex-direction: column;
-  gap: 9px;
+  gap: 10px;
 
   width: 100%;
 
@@ -1356,8 +1361,13 @@ svg {
 
 .stat-horizontal-month {
   display: grid;
-  grid-template-columns: 42px minmax(0, 1fr);
+  grid-template-columns:
+    42px
+    minmax(0, 1fr)
+    minmax(54px, auto);
+
   align-items: center;
+
   gap: 10px;
 
   width: 100%;
@@ -1374,62 +1384,98 @@ svg {
   white-space: nowrap;
 }
 
-.stat-horizontal-bars {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 2px;
-
-  min-width: 0;
-  min-height: 15px;
-}
-
-.stat-horizontal-bar-row {
+.stat-horizontal-track {
   position: relative;
 
   overflow: hidden;
 
   width: 100%;
-  height: 5px;
+  height: 15px;
 
-  border-radius: 999px;
+  border-radius: 5px;
 
-  background: #f3f3f3;
+  background: #f1f1f3;
 }
 
-.stat-horizontal-bar {
+.stat-horizontal-stack {
+  display: flex;
+
+  overflow: hidden;
+
+  min-width: 0;
   height: 100%;
 
-  border-radius: 999px;
+  border-radius: inherit;
 
   transition: width 0.2s ease;
 }
 
+.stat-horizontal-segment {
+  display: block;
+  flex: 0 0 auto;
+
+  min-width: 0;
+  height: 100%;
+}
+
+.stat-horizontal-total {
+  overflow: hidden;
+
+  color: #888;
+
+  font-size: 9px;
+  font-weight: 550;
+
+  text-align: right;
+
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 
 /* =========================================================
-   STATISTICS - LEGEND
+   STATISTICS - LEGEND / FILTER
 ========================================================= */
 
 .stat-legend {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 8px 16px;
+  gap: 8px 10px;
 
-  margin-top: 19px;
+  margin-top: 20px;
 }
 
-.stat-legend span {
-  display: flex;
+.stat-legend button {
+  display: inline-flex;
   align-items: center;
   gap: 5px;
 
-  color: #6f6f6f;
+  min-height: 25px;
+
+  padding: 4px 7px;
+
+  border: 0;
+  border-radius: 7px;
+
+  background: transparent;
+  color: #686868;
 
   font-size: 9.5px;
+  line-height: 1;
+
+  cursor: pointer;
+
+  transition:
+    opacity 0.15s ease,
+    background 0.15s ease;
 }
 
-.stat-legend i {
+.stat-legend button:hover {
+  background: #f3f3f3;
+}
+
+.stat-legend button i {
   display: block;
   flex: 0 0 auto;
 
@@ -1437,6 +1483,18 @@ svg {
   height: 8px;
 
   border-radius: 50%;
+}
+
+.stat-legend button span {
+  white-space: nowrap;
+}
+
+.stat-legend button.off {
+  opacity: 0.3;
+}
+
+.stat-legend button.off:hover {
+  opacity: 0.55;
 }
 
 
@@ -1538,7 +1596,7 @@ svg {
 
 /* =========================================================
    STAT CATEGORY COLORS
-   Apple system-color inspired
+   24 DISTINCT COLORS
 ========================================================= */
 
 .stat-color-0 {
@@ -1582,11 +1640,59 @@ svg {
 }
 
 .stat-color-10 {
-  background: #64d2ff;
+  background: #ffcc00;
 }
 
 .stat-color-11 {
-  background: #ff6482;
+  background: #30b0c7;
+}
+
+.stat-color-12 {
+  background: #bf5af2;
+}
+
+.stat-color-13 {
+  background: #ff9f0a;
+}
+
+.stat-color-14 {
+  background: #64d2ff;
+}
+
+.stat-color-15 {
+  background: #5e5ce6;
+}
+
+.stat-color-16 {
+  background: #ff375f;
+}
+
+.stat-color-17 {
+  background: #66d4cf;
+}
+
+.stat-color-18 {
+  background: #30d158;
+}
+
+.stat-color-19 {
+  background: #ff453a;
+}
+
+.stat-color-20 {
+  background: #0a84ff;
+}
+
+.stat-color-21 {
+  background: #ac8e68;
+}
+
+.stat-color-22 {
+  background: #ffd60a;
+}
+
+.stat-color-23 {
+  background: #8e8e93;
 }
 
 
@@ -1835,6 +1941,30 @@ svg {
 
 
 /* =========================================================
+   CHOICE MODAL
+========================================================= */
+
+.choice-sheet {
+  width: min(100%, 390px);
+}
+
+.choice-sheet h2 {
+  margin-bottom: 18px;
+}
+
+.choice-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+
+  gap: 8px;
+}
+
+.choice-actions button {
+  width: 100%;
+}
+
+
+/* =========================================================
    AUTH
 ========================================================= */
 
@@ -1926,9 +2056,7 @@ svg {
   }
 
   .day-head {
-    grid-template-columns: 25px minmax(0, 1fr) 18px;
-
-    gap: 2px;
+    gap: 3px;
   }
 
   .day-number {
@@ -2027,6 +2155,7 @@ svg {
   }
 
   /* 월 이동 */
+
   .month {
     margin-top: 15px;
     margin-bottom: 15px;
@@ -2037,6 +2166,7 @@ svg {
   }
 
   /* 생활수지 */
+
   .balance {
     min-height: 132px;
 
@@ -2057,6 +2187,7 @@ svg {
   }
 
   /* 홈 요약 */
+
   .home-summary {
     grid-template-columns:
       minmax(0, 1fr)
@@ -2104,6 +2235,7 @@ svg {
   }
 
   /* 내역 */
+
   .history-top-row,
   .history-bottom-row {
     display: flex;
@@ -2152,7 +2284,6 @@ svg {
     font-size: 10px;
 
     white-space: nowrap;
-    word-break: keep-all;
   }
 
   .history-spacer {
@@ -2199,7 +2330,11 @@ svg {
     font-size: 12px;
   }
 
-  /* 캘린더 - 반드시 일~토 7열 전체 표시 */
+  /* =====================================================
+     MOBILE CALENDAR
+     7열 전체 표시
+  ===================================================== */
+
   main:has(.calendar) {
     overflow-x: visible;
 
@@ -2216,7 +2351,11 @@ svg {
   }
 
   .week {
-    grid-template-columns: repeat(7, minmax(0, 1fr));
+    grid-template-columns:
+      repeat(
+        7,
+        minmax(0, 1fr)
+      );
   }
 
   .week span {
@@ -2227,7 +2366,11 @@ svg {
   }
 
   .calendar {
-    grid-template-columns: repeat(7, minmax(0, 1fr));
+    grid-template-columns:
+      repeat(
+        7,
+        minmax(0, 1fr)
+      );
   }
 
   .day {
@@ -2252,25 +2395,55 @@ svg {
   .day-number {
     flex: 0 0 auto;
 
-    width: 22px;
+    width: 18px;
     height: 22px;
 
-    font-size: 10px;
+    font-size: 9px;
+  }
+
+  .today-cell .day-number {
+    width: 22px;
   }
 
   .day-flow {
     flex: 1 1 auto;
 
+    overflow: visible;
+
     min-width: 0;
 
-    font-size: 6.5px;
-    font-weight: 600;
+    font-size:
+      clamp(
+        5.5px,
+        1.55vw,
+        7.5px
+      );
+
+    font-weight: 700;
+    line-height: 1;
+
+    letter-spacing: -0.06em;
 
     text-align: right;
+
+    white-space: nowrap;
+    text-overflow: clip;
+  }
+
+  .day-flow.positive {
+    color: #007aff;
+  }
+
+  .day-flow.negative {
+    color: #ff3b30;
   }
 
   .day-add {
     display: none;
+  }
+
+  .day-flow-spacer {
+    flex: 1 1 auto;
   }
 
   .calendar-items {
@@ -2338,7 +2511,10 @@ svg {
     text-overflow: ellipsis;
   }
 
-  /* 통계 */
+  /* =====================================================
+     MOBILE STATISTICS
+  ===================================================== */
+
   .statTabs {
     width: 100%;
   }
@@ -2362,44 +2538,53 @@ svg {
   }
 
   .stat-horizontal-chart {
-    gap: 7px;
+    gap: 8px;
 
     width: 100%;
   }
 
   .stat-horizontal-month {
-    grid-template-columns: 31px minmax(0, 1fr);
+    grid-template-columns:
+      27px
+      minmax(0, 1fr)
+      48px;
 
-    gap: 7px;
+    gap: 6px;
   }
 
   .stat-horizontal-label {
-    font-size: 9px;
+    font-size: 8.5px;
   }
 
-  .stat-horizontal-bars {
-    gap: 1.5px;
+  .stat-horizontal-track {
+    height: 12px;
 
-    min-height: 12px;
+    border-radius: 4px;
   }
 
-  .stat-horizontal-bar-row {
-    height: 4px;
+  .stat-horizontal-total {
+    font-size: 7.5px;
+
+    letter-spacing: -0.04em;
   }
 
   .stat-legend {
     justify-content: flex-start;
 
-    gap: 7px 12px;
+    gap: 5px 7px;
 
     margin-top: 16px;
   }
 
-  .stat-legend span {
-    font-size: 9px;
+  .stat-legend button {
+    min-height: 23px;
+
+    padding: 4px 5px;
+
+    font-size: 8.5px;
   }
 
-  .stat-legend i {
+  .stat-legend button i {
     width: 7px;
     height: 7px;
   }
@@ -2431,6 +2616,10 @@ svg {
     flex: 1 1 auto;
   }
 
+  .choice-sheet .actions {
+    display: grid;
+  }
+
   .day {
     min-height: 106px;
 
@@ -2442,14 +2631,25 @@ svg {
   }
 
   .day-number {
-    width: 21px;
+    width: 17px;
     height: 21px;
 
-    font-size: 9px;
+    font-size: 8.5px;
+  }
+
+  .today-cell .day-number {
+    width: 21px;
   }
 
   .day-flow {
-    font-size: 6px;
+    font-size:
+      clamp(
+        5.2px,
+        1.5vw,
+        6.4px
+      );
+
+    letter-spacing: -0.07em;
   }
 
   .calendar-item {
@@ -2464,6 +2664,19 @@ svg {
 
   .calendar-item strong {
     font-size: 6px;
+  }
+
+  .stat-horizontal-month {
+    grid-template-columns:
+      25px
+      minmax(0, 1fr)
+      43px;
+
+    gap: 5px;
+  }
+
+  .stat-horizontal-total {
+    font-size: 7px;
   }
 }
 
@@ -2486,7 +2699,8 @@ svg {
   }
 
   .nav-capsule {
-    grid-template-columns: repeat(5, 40px);
+    grid-template-columns:
+      repeat(5, 40px);
   }
 
   .nav-capsule button {
@@ -2547,14 +2761,20 @@ svg {
   }
 
   .day-number {
-    width: 19px;
+    width: 16px;
     height: 19px;
 
-    font-size: 8.5px;
+    font-size: 8px;
+  }
+
+  .today-cell .day-number {
+    width: 19px;
   }
 
   .day-flow {
-    font-size: 5.5px;
+    font-size: 5px;
+
+    letter-spacing: -0.08em;
   }
 
   .calendar-item {
@@ -2576,8 +2796,23 @@ svg {
   }
 
   .stat-horizontal-month {
-    grid-template-columns: 28px minmax(0, 1fr);
+    grid-template-columns:
+      23px
+      minmax(0, 1fr)
+      39px;
 
-    gap: 6px;
+    gap: 4px;
+  }
+
+  .stat-horizontal-label {
+    font-size: 8px;
+  }
+
+  .stat-horizontal-track {
+    height: 10px;
+  }
+
+  .stat-horizontal-total {
+    font-size: 6.5px;
   }
 }
