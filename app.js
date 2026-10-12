@@ -37,7 +37,7 @@ month.setHours(12, 0, 0, 0);
 let view = '홈';
 
 /* 내역 */
-let historyMode = 'month'; // day | month | year
+let historyMode = 'month';
 let historyDate = new Date();
 historyDate.setHours(12, 0, 0, 0);
 
@@ -47,7 +47,7 @@ let searchQuery = '';
 
 /* 통계 */
 let statKind = '지출';
-let statMode = 'monthly'; // monthly | category
+let statMode = 'monthly';
 
 const kinds = ['수입', '지출', '저축', '투자'];
 
@@ -85,7 +85,9 @@ const defaults = {
     '매수',
     '매도',
     '배당',
-    '배당금'
+    '배당금',
+    '외화 구매',
+    '외화 판매'
   ]
 };
 
@@ -205,17 +207,24 @@ function sameDay(a, b) {
 ========================================================= */
 
 function inv(t) {
-  if (t.kind !== '투자') return null;
+  if (t.kind !== '투자') {
+    return null;
+  }
 
-  const c = String(t.category || '');
+  const category =
+    String(t.category || '');
 
-  if (c.includes('매수')) {
+  if (
+    category.includes('매수') ||
+    category.includes('외화 구매')
+  ) {
     return 'buy';
   }
 
   if (
-    c.includes('매도') ||
-    c.includes('배당')
+    category.includes('매도') ||
+    category.includes('배당') ||
+    category.includes('외화 판매')
   ) {
     return 'plus';
   }
@@ -224,12 +233,22 @@ function inv(t) {
 }
 
 function sign(t) {
-  if (t.kind === '수입') return '+';
-  if (t.kind === '지출') return '−';
+  if (t.kind === '수입') {
+    return '+';
+  }
+
+  if (t.kind === '지출') {
+    return '−';
+  }
 
   if (t.kind === '투자') {
-    if (inv(t) === 'plus') return '+';
-    if (inv(t) === 'buy') return '−';
+    if (inv(t) === 'plus') {
+      return '+';
+    }
+
+    if (inv(t) === 'buy') {
+      return '−';
+    }
   }
 
   return '';
@@ -240,7 +259,8 @@ function money(t) {
 }
 
 function signedValue(t) {
-  const amount = Number(t.amount || 0);
+  const amount =
+    Number(t.amount || 0);
 
   if (t.kind === '수입') {
     return amount;
@@ -280,7 +300,6 @@ function signedMoney(value) {
 
 /* =========================================================
    안전한 금액 계산기
-   + - * / ( )
 ========================================================= */
 
 function tokenizeExpression(input) {
@@ -290,17 +309,25 @@ function tokenizeExpression(input) {
       .replace(/\s+/g, '');
 
   if (!source) {
-    throw new Error('금액을 입력해주세요.');
+    throw new Error(
+      '금액을 입력해주세요.'
+    );
   }
 
   if (!/^[0-9+\-*/().]+$/.test(source)) {
-    throw new Error('금액을 확인해주세요.');
+    throw new Error(
+      '금액을 확인해주세요.'
+    );
   }
 
   const tokens = [];
   let number = '';
 
-  for (let i = 0; i < source.length; i++) {
+  for (
+    let i = 0;
+    i < source.length;
+    i++
+  ) {
     const ch = source[i];
 
     if (
@@ -312,8 +339,13 @@ function tokenizeExpression(input) {
     }
 
     if (number) {
-      if ((number.match(/\./g) || []).length > 1) {
-        throw new Error('금액을 확인해주세요.');
+      if (
+        (number.match(/\./g) || [])
+          .length > 1
+      ) {
+        throw new Error(
+          '금액을 확인해주세요.'
+        );
       }
 
       tokens.push(Number(number));
@@ -323,13 +355,20 @@ function tokenizeExpression(input) {
     if ('+-*/()'.includes(ch)) {
       tokens.push(ch);
     } else {
-      throw new Error('금액을 확인해주세요.');
+      throw new Error(
+        '금액을 확인해주세요.'
+      );
     }
   }
 
   if (number) {
-    if ((number.match(/\./g) || []).length > 1) {
-      throw new Error('금액을 확인해주세요.');
+    if (
+      (number.match(/\./g) || [])
+        .length > 1
+    ) {
+      throw new Error(
+        '금액을 확인해주세요.'
+      );
     }
 
     tokens.push(Number(number));
@@ -339,7 +378,8 @@ function tokenizeExpression(input) {
 }
 
 function calc(input) {
-  const tokens = tokenizeExpression(input);
+  const tokens =
+    tokenizeExpression(input);
 
   const output = [];
   const operators = [];
@@ -356,7 +396,9 @@ function calc(input) {
   tokens.forEach(token => {
     if (typeof token === 'number') {
       if (!Number.isFinite(token)) {
-        throw new Error('금액을 확인해주세요.');
+        throw new Error(
+          '금액을 확인해주세요.'
+        );
       }
 
       output.push(token);
@@ -375,11 +417,15 @@ function calc(input) {
         operators.length &&
         operators.at(-1) !== '('
       ) {
-        output.push(operators.pop());
+        output.push(
+          operators.pop()
+        );
       }
 
       if (operators.pop() !== '(') {
-        throw new Error('괄호를 확인해주세요.');
+        throw new Error(
+          '괄호를 확인해주세요.'
+        );
       }
 
       previous = ')';
@@ -387,12 +433,9 @@ function calc(input) {
     }
 
     if ('+-*/'.includes(token)) {
-      /*
-        단항 + / -
-        예: -100, 100*-2
-      */
       if (
-        (token === '+' || token === '-') &&
+        (token === '+' ||
+          token === '-') &&
         (
           previous === null ||
           previous === 'operator' ||
@@ -405,10 +448,13 @@ function calc(input) {
       while (
         operators.length &&
         operators.at(-1) !== '(' &&
-        precedence[operators.at(-1)] >=
-          precedence[token]
+        precedence[
+          operators.at(-1)
+        ] >= precedence[token]
       ) {
-        output.push(operators.pop());
+        output.push(
+          operators.pop()
+        );
       }
 
       operators.push(token);
@@ -417,10 +463,16 @@ function calc(input) {
   });
 
   while (operators.length) {
-    const op = operators.pop();
+    const op =
+      operators.pop();
 
-    if (op === '(' || op === ')') {
-      throw new Error('괄호를 확인해주세요.');
+    if (
+      op === '(' ||
+      op === ')'
+    ) {
+      throw new Error(
+        '괄호를 확인해주세요.'
+      );
     }
 
     output.push(op);
@@ -435,19 +487,31 @@ function calc(input) {
     }
 
     if (stack.length < 2) {
-      throw new Error('계산식을 확인해주세요.');
+      throw new Error(
+        '계산식을 확인해주세요.'
+      );
     }
 
     const b = stack.pop();
     const a = stack.pop();
 
-    if (token === '+') stack.push(a + b);
-    if (token === '-') stack.push(a - b);
-    if (token === '*') stack.push(a * b);
+    if (token === '+') {
+      stack.push(a + b);
+    }
+
+    if (token === '-') {
+      stack.push(a - b);
+    }
+
+    if (token === '*') {
+      stack.push(a * b);
+    }
 
     if (token === '/') {
       if (b === 0) {
-        throw new Error('0으로 나눌 수 없습니다.');
+        throw new Error(
+          '0으로 나눌 수 없습니다.'
+        );
       }
 
       stack.push(a / b);
@@ -455,7 +519,9 @@ function calc(input) {
   });
 
   if (stack.length !== 1) {
-    throw new Error('계산식을 확인해주세요.');
+    throw new Error(
+      '계산식을 확인해주세요.'
+    );
   }
 
   const result = stack[0];
@@ -464,7 +530,9 @@ function calc(input) {
     !Number.isFinite(result) ||
     result < 0
   ) {
-    throw new Error('금액을 확인해주세요.');
+    throw new Error(
+      '금액을 확인해주세요.'
+    );
   }
 
   return Math.round(result);
@@ -477,32 +545,48 @@ function calc(input) {
 function sum(items) {
   const kindTotal = kind =>
     items
-      .filter(t => t.kind === kind)
+      .filter(
+        t => t.kind === kind
+      )
       .reduce(
         (total, t) =>
-          total + Number(t.amount || 0),
+          total +
+          Number(t.amount || 0),
         0
       );
 
-  const plus = items
-    .filter(t => inv(t) === 'plus')
-    .reduce(
-      (total, t) =>
-        total + Number(t.amount || 0),
-      0
-    );
+  const plus =
+    items
+      .filter(
+        t => inv(t) === 'plus'
+      )
+      .reduce(
+        (total, t) =>
+          total +
+          Number(t.amount || 0),
+        0
+      );
 
-  const buy = items
-    .filter(t => inv(t) === 'buy')
-    .reduce(
-      (total, t) =>
-        total + Number(t.amount || 0),
-      0
-    );
+  const buy =
+    items
+      .filter(
+        t => inv(t) === 'buy'
+      )
+      .reduce(
+        (total, t) =>
+          total +
+          Number(t.amount || 0),
+        0
+      );
 
-  const income = kindTotal('수입');
-  const expense = kindTotal('지출');
-  const saving = kindTotal('저축');
+  const income =
+    kindTotal('수입');
+
+  const expense =
+    kindTotal('지출');
+
+  const saving =
+    kindTotal('저축');
 
   return {
     income,
@@ -513,7 +597,13 @@ function sum(items) {
 
     /*
       생활수지 =
-      수입 + 매도·배당 - 지출 - 매수
+      수입
+      + 매도
+      + 배당
+      + 외화 판매
+      - 지출
+      - 매수
+      - 외화 구매
 
       저축 제외
     */
@@ -529,22 +619,29 @@ function monthly(d = month) {
   const key = ym(d);
 
   return tx.filter(t =>
-    date(t.date).startsWith(key)
+    date(t.date)
+      .startsWith(key)
   );
 }
 
-function yearly(year = month.getFullYear()) {
+function yearly(
+  year = month.getFullYear()
+) {
   return tx.filter(
     t =>
-      toDate(t.date).getFullYear() === year
+      toDate(t.date)
+        .getFullYear() === year
   );
 }
 
-function daily(d = historyDate) {
+function daily(
+  d = historyDate
+) {
   const key = date(d);
 
   return tx.filter(
-    t => date(t.date) === key
+    t =>
+      date(t.date) === key
   );
 }
 
@@ -554,7 +651,10 @@ function daily(d = historyDate) {
 
 function allCategoriesForKind(kind) {
   const custom =
-    (settings.custom_categories || [])
+    (
+      settings.custom_categories ||
+      []
+    )
       .filter(item => {
         const raw =
           item.kindRawValue ||
@@ -574,10 +674,15 @@ function allCategoriesForKind(kind) {
     kind &&
     kind !== '전체'
   ) {
-    const fromTransactions = tx
-      .filter(t => t.kind === kind)
-      .map(t => t.category)
-      .filter(Boolean);
+    const fromTransactions =
+      tx
+        .filter(
+          t => t.kind === kind
+        )
+        .map(
+          t => t.category
+        )
+        .filter(Boolean);
 
     return [
       ...new Set([
@@ -590,17 +695,25 @@ function allCategoriesForKind(kind) {
 
   return [
     ...new Set([
-      ...Object.values(defaults).flat(),
+      ...Object
+        .values(defaults)
+        .flat(),
+
       ...custom,
+
       ...tx
-        .map(t => t.category)
+        .map(
+          t => t.category
+        )
         .filter(Boolean)
     ])
   ];
 }
 
 function cats(kind) {
-  return allCategoriesForKind(kind);
+  return allCategoriesForKind(
+    kind
+  );
 }
 
 /* =========================================================
@@ -737,6 +850,14 @@ function svgIcon(name) {
       <circle cx="16" cy="14" r="2"/>
     `,
 
+    exchange: `
+      <circle cx="12" cy="12" r="8"/>
+      <path d="M7.5 10h9"/>
+      <path d="M14 7.5l2.5 2.5-2.5 2.5"/>
+      <path d="M16.5 14h-9"/>
+      <path d="M10 11.5L7.5 14l2.5 2.5"/>
+    `,
+
     saving: `
       <rect x="3" y="6" width="18" height="12" rx="2"/>
       <circle cx="12" cy="12" r="2.5"/>
@@ -766,7 +887,10 @@ function svgIcon(name) {
 
   return (
     baseStart +
-    (icons[name] || icons.plusCircle) +
+    (
+      icons[name] ||
+      icons.plusCircle
+    ) +
     end
   );
 }
@@ -843,6 +967,13 @@ function categoryIcon(t) {
     return svgIcon('shield');
   }
 
+  if (
+    category.includes('외화 구매') ||
+    category.includes('외화 판매')
+  ) {
+    return svgIcon('exchange');
+  }
+
   if (category.includes('매수')) {
     return svgIcon('buy');
   }
@@ -870,14 +1001,20 @@ async function load() {
     db
       .from('transactions')
       .select('*')
-      .order('date', {
-        ascending: false
-      }),
+      .order(
+        'date',
+        {
+          ascending: false
+        }
+      ),
 
     db
       .from('settings')
       .select('*')
-      .eq('user_id', user.id)
+      .eq(
+        'user_id',
+        user.id
+      )
       .maybeSingle()
   ]);
 
@@ -889,7 +1026,9 @@ async function load() {
     throw settingResult.error;
   }
 
-  tx = transactionResult.data || [];
+  tx =
+    transactionResult.data ||
+    [];
 
   settings =
     settingResult.data ||
@@ -955,32 +1094,42 @@ function auth(msg = '') {
   const form =
     root.querySelector('#login');
 
-  form.onsubmit = async e => {
-    e.preventDefault();
+  form.onsubmit =
+    async e => {
+      e.preventDefault();
 
-    const data =
-      new FormData(form);
+      const data =
+        new FormData(form);
 
-    const { error } =
-      await db.auth.signInWithPassword({
-        email: data.get('email'),
-        password: data.get('password')
-      });
+      const { error } =
+        await db.auth
+          .signInWithPassword({
+            email:
+              data.get('email'),
 
-    if (error) {
-      auth(error.message);
-    }
-  };
+            password:
+              data.get('password')
+          });
 
-  root.querySelector('#signup').onclick =
+      if (error) {
+        auth(error.message);
+      }
+    };
+
+  root
+    .querySelector('#signup')
+    .onclick =
     async () => {
       const data =
         new FormData(form);
 
       const { error } =
         await db.auth.signUp({
-          email: data.get('email'),
-          password: data.get('password')
+          email:
+            data.get('email'),
+
+          password:
+            data.get('password')
         });
 
       auth(
@@ -1010,7 +1159,11 @@ function nav() {
         ].map(item => `
           <button
             data-view="${item}"
-            class="${view === item ? 'on' : ''}"
+            class="${
+              view === item
+                ? 'on'
+                : ''
+            }"
           >
             ${item}
           </button>
@@ -1076,59 +1229,119 @@ function monthbar() {
 function cards(s) {
   return `
     <section class="cards home-summary">
-      <article class="summary-card summary-income">
-        <div class="summary-label">수입</div>
-        <b>+${won(s.income)}</b>
-      </article>
 
-      <article class="summary-card summary-expense">
-        <div class="summary-label">지출</div>
-        <b>−${won(s.expense)}</b>
-      </article>
-
-      <article class="summary-card summary-saving">
-        <div class="summary-label">저축</div>
-        <b>${won(s.saving)}</b>
-      </article>
-
-      <article class="summary-card summary-investment">
-        <div class="summary-label">투자</div>
-
-        <div class="investment-part">
-          <span>매도·배당</span>
-          <b>+${won(s.plus)}</b>
+      <article
+        class="
+          summary-card
+          summary-income
+        "
+      >
+        <div class="summary-label">
+          수입
         </div>
 
-        <div class="investment-divider"></div>
+        <b>
+          +${won(s.income)}
+        </b>
+      </article>
+
+      <article
+        class="
+          summary-card
+          summary-expense
+        "
+      >
+        <div class="summary-label">
+          지출
+        </div>
+
+        <b>
+          −${won(s.expense)}
+        </b>
+      </article>
+
+      <article
+        class="
+          summary-card
+          summary-saving
+        "
+      >
+        <div class="summary-label">
+          저축
+        </div>
+
+        <b>
+          ${won(s.saving)}
+        </b>
+      </article>
+
+      <article
+        class="
+          summary-card
+          summary-investment
+        "
+      >
+
+        <div class="summary-label">
+          투자
+        </div>
 
         <div class="investment-part">
-          <span>매수·투자</span>
-          <b>−${won(s.buy)}</b>
+          <span>
+            매도·배당·외화 판매
+          </span>
+
+          <b>
+            +${won(s.plus)}
+          </b>
         </div>
+
+        <div
+          class="investment-divider"
+        ></div>
+
+        <div class="investment-part">
+          <span>
+            매수·외화 구매
+          </span>
+
+          <b>
+            −${won(s.buy)}
+          </b>
+        </div>
+
       </article>
+
     </section>
   `;
 }
 
 function home() {
-  const items = monthly();
-  const s = sum(items);
+  const items =
+    monthly();
+
+  const s =
+    sum(items);
 
   return `
     ${monthbar()}
 
     <section class="balance">
-      <span>이번 달 생활수지</span>
-      <b>${signedMoney(s.balance)}</b>
+
+      <span>
+        이번 달 생활수지
+      </span>
+
+      <b>
+        ${signedMoney(s.balance)}
+      </b>
+
     </section>
 
     ${cards(s)}
   `;
 }
 
-/* =========================================================
-   거래 목록
-========================================================= */
 /* =========================================================
    거래 목록
 ========================================================= */
@@ -1174,7 +1387,9 @@ function rows(items) {
               ${
                 t.repeat_series_id
                   ? `
-                    <span class="repeat-mark">
+                    <span
+                      class="repeat-mark"
+                    >
                       ↻
                     </span>
                   `
@@ -1184,9 +1399,13 @@ function rows(items) {
             </small>
 
             ${
-              String(t.note || '').trim()
+              String(
+                t.note || ''
+              ).trim()
                 ? `
-                  <small class="row-note">
+                  <small
+                    class="row-note"
+                  >
                     ${esc(t.note)}
                   </small>
                 `
@@ -1212,19 +1431,25 @@ function rows(items) {
 
 function historyPeriodItems() {
   if (historyMode === 'day') {
-    return daily(historyDate);
+    return daily(
+      historyDate
+    );
   }
 
   if (historyMode === 'year') {
     return yearly(
-      historyDate.getFullYear()
+      historyDate
+        .getFullYear()
     );
   }
 
-  const key = ym(historyDate);
+  const key =
+    ym(historyDate);
 
-  return tx.filter(t =>
-    date(t.date).startsWith(key)
+  return tx.filter(
+    t =>
+      date(t.date)
+        .startsWith(key)
   );
 }
 
@@ -1233,17 +1458,21 @@ function historyBaseItems() {
     historyPeriodItems();
 
   if (filter !== '전체') {
-    items = items.filter(
-      t => t.kind === filter
-    );
+    items =
+      items.filter(
+        t => t.kind === filter
+      );
   }
 
-  if (categoryFilter !== '전체') {
-    items = items.filter(
-      t =>
-        t.category ===
-        categoryFilter
-    );
+  if (
+    categoryFilter !== '전체'
+  ) {
+    items =
+      items.filter(
+        t =>
+          t.category ===
+          categoryFilter
+      );
   }
 
   if (searchQuery.trim()) {
@@ -1252,23 +1481,25 @@ function historyBaseItems() {
         .trim()
         .toLowerCase();
 
-    items = items.filter(t =>
-      [
-        t.title,
-        t.category,
-        t.note
-      ]
-        .join(' ')
-        .toLowerCase()
-        .includes(q)
-    );
+    items =
+      items.filter(t =>
+        [
+          t.title,
+          t.category,
+          t.note
+        ]
+          .join(' ')
+          .toLowerCase()
+          .includes(q)
+      );
   }
 
   return items;
 }
 
 function historySummary(items) {
-  const count = items.length;
+  const count =
+    items.length;
 
   if (!items.length) {
     return '0건';
@@ -1278,33 +1509,45 @@ function historySummary(items) {
     const total =
       items.reduce(
         (s, t) =>
-          s + Number(t.amount || 0),
+          s +
+          Number(t.amount || 0),
         0
       );
 
-    return `${count}건　총 ${won(total)}`;
+    return (
+      `${count}건　총 ` +
+      `${won(total)}`
+    );
   }
 
   if (filter === '수입') {
     const total =
       items.reduce(
         (s, t) =>
-          s + Number(t.amount || 0),
+          s +
+          Number(t.amount || 0),
         0
       );
 
-    return `${count}건　총 +${won(total)}`;
+    return (
+      `${count}건　총 ` +
+      `+${won(total)}`
+    );
   }
 
   if (filter === '지출') {
     const total =
       items.reduce(
         (s, t) =>
-          s + Number(t.amount || 0),
+          s +
+          Number(t.amount || 0),
         0
       );
 
-    return `${count}건　총 −${won(total)}`;
+    return (
+      `${count}건　총 ` +
+      `−${won(total)}`
+    );
   }
 
   const total =
@@ -1342,7 +1585,9 @@ function historyPeriodTitle() {
 }
 
 function categoryOptions() {
-  return allCategoriesForKind(filter);
+  return allCategoriesForKind(
+    filter
+  );
 }
 
 function history() {
@@ -1357,7 +1602,9 @@ function history() {
 
       <div class="history-top-row">
 
-        <div class="history-period-toggle">
+        <div
+          class="history-period-toggle"
+        >
 
           <button
             data-history-mode="month"
@@ -1394,7 +1641,9 @@ function history() {
 
         </div>
 
-        <div class="history-search-wrap">
+        <div
+          class="history-search-wrap"
+        >
 
           <input
             id="search"
@@ -1404,7 +1653,9 @@ function history() {
 
         </div>
 
-        <div class="history-period-nav">
+        <div
+          class="history-period-nav"
+        >
 
           <button
             id="prev"
@@ -1435,11 +1686,17 @@ function history() {
 
       </div>
 
-      <div class="history-bottom-row">
+      <div
+        class="history-bottom-row"
+      >
 
-        <div class="history-spacer"></div>
+        <div
+          class="history-spacer"
+        ></div>
 
-        <div class="history-filter-row">
+        <div
+          class="history-filter-row"
+        >
 
           <div class="tabs">
 
@@ -1463,26 +1720,35 @@ function history() {
 
         </div>
 
-        <div class="category-filter-wrap">
+        <div
+          class="category-filter-wrap"
+        >
 
           <button
             id="categoryButton"
             class="category-button"
           >
 
-            <span class="category-button-icon">
+            <span
+              class="category-button-icon"
+            >
               ${svgIcon('tag')}
             </span>
 
             <span>
               ${
-                categoryFilter === '전체'
+                categoryFilter ===
+                '전체'
                   ? '카테고리'
-                  : esc(categoryFilter)
+                  : esc(
+                      categoryFilter
+                    )
               }
             </span>
 
-            <span class="category-chevron">
+            <span
+              class="category-chevron"
+            >
               ⌄
             </span>
 
@@ -1497,44 +1763,58 @@ function history() {
             <button
               data-category="전체"
               class="${
-                categoryFilter === '전체'
+                categoryFilter ===
+                '전체'
                   ? 'on'
                   : ''
               }"
             >
 
-              <span class="menu-icon">
-                ${svgIcon('plusCircle')}
+              <span
+                class="menu-icon"
+              >
+                ${svgIcon(
+                  'plusCircle'
+                )}
               </span>
 
               전체 카테고리
 
             </button>
 
-            ${categories.map(category => `
-              <button
-                data-category="${esc(category)}"
-                class="${
-                  categoryFilter === category
-                    ? 'on'
-                    : ''
-                }"
-              >
-
-                <span class="menu-icon">
-                  ${categoryIcon({
-                    kind:
-                      filter === '전체'
-                        ? ''
-                        : filter,
+            ${categories.map(
+              category => `
+                <button
+                  data-category="${
+                    esc(category)
+                  }"
+                  class="${
+                    categoryFilter ===
                     category
-                  })}
-                </span>
+                      ? 'on'
+                      : ''
+                  }"
+                >
 
-                ${esc(category)}
+                  <span
+                    class="menu-icon"
+                  >
+                    ${categoryIcon({
+                      kind:
+                        filter ===
+                        '전체'
+                          ? ''
+                          : filter,
 
-              </button>
-            `).join('')}
+                      category
+                    })}
+                  </span>
+
+                  ${esc(category)}
+
+                </button>
+              `
+            ).join('')}
 
           </div>
 
@@ -1542,7 +1822,9 @@ function history() {
 
       </div>
 
-      <div class="history-result-summary">
+      <div
+        class="history-result-summary"
+      >
         ${historySummary(items)}
       </div>
 
@@ -1581,7 +1863,8 @@ function calendarCardClass(t) {
 function dailyCashflow(items) {
   return items.reduce(
     (total, t) =>
-      total + signedValue(t),
+      total +
+      signedValue(t),
     0
   );
 }
@@ -1590,14 +1873,18 @@ function cashflowText(value) {
   if (value > 0) {
     return {
       className: 'positive',
-      text: `+${won(value)}`
+      text:
+        `+${won(value)}`
     };
   }
 
   if (value < 0) {
     return {
       className: 'negative',
-      text: `−${won(Math.abs(value))}`
+      text:
+        `−${won(
+          Math.abs(value)
+        )}`
     };
   }
 
@@ -1643,49 +1930,68 @@ function calendar() {
 
   let cells = '';
 
-  for (let i = 0; i < 42; i++) {
+  for (
+    let i = 0;
+    i < 42;
+    i++
+  ) {
     const dayNumber =
       i - firstDay + 1;
 
     let d;
 
     if (dayNumber < 1) {
-      d = new Date(
-        year,
-        monthIndex - 1,
-        previousMonthDays + dayNumber,
-        12
-      );
+      d =
+        new Date(
+          year,
+          monthIndex - 1,
+          previousMonthDays +
+            dayNumber,
+          12
+        );
+
     } else if (
       dayNumber >
       currentMonthDays
     ) {
-      d = new Date(
-        year,
-        monthIndex + 1,
-        dayNumber - currentMonthDays,
-        12
-      );
+      d =
+        new Date(
+          year,
+          monthIndex + 1,
+          dayNumber -
+            currentMonthDays,
+          12
+        );
+
     } else {
-      d = new Date(
-        year,
-        monthIndex,
-        dayNumber,
-        12
-      );
+      d =
+        new Date(
+          year,
+          monthIndex,
+          dayNumber,
+          12
+        );
     }
 
-    const key = date(d);
+    const key =
+      date(d);
 
     const items =
       tx
-        .filter(t =>
-          date(t.date) === key
+        .filter(
+          t =>
+            date(t.date) === key
         )
         .sort(
           (a, b) =>
-            new Date(a.created_at || a.date) -
-            new Date(b.created_at || b.date)
+            new Date(
+              a.created_at ||
+              a.date
+            ) -
+            new Date(
+              b.created_at ||
+              b.date
+            )
         );
 
     const flow =
@@ -1695,7 +2001,8 @@ function calendar() {
       cashflowText(flow);
 
     const isOther =
-      d.getMonth() !== monthIndex;
+      d.getMonth() !==
+      monthIndex;
 
     const isToday =
       key === todayKey;
@@ -1707,7 +2014,11 @@ function calendar() {
         class="
           day
           ${isOther ? 'other' : ''}
-          ${isToday ? 'today-cell' : ''}
+          ${
+            isToday
+              ? 'today-cell'
+              : ''
+          }
         "
       >
 
@@ -1752,12 +2063,19 @@ function calendar() {
         <div class="calendar-items">
 
           ${items
-            .slice(0, visibleCount)
+            .slice(
+              0,
+              visibleCount
+            )
             .map(t => `
               <button
                 class="
                   calendar-item
-                  ${calendarCardClass(t)}
+                  ${
+                    calendarCardClass(
+                      t
+                    )
+                  }
                 "
                 data-id="${t.id}"
               >
@@ -1781,13 +2099,17 @@ function calendar() {
         </div>
 
         ${
-          items.length > visibleCount
+          items.length >
+          visibleCount
             ? `
               <button
                 class="more-count"
                 data-open-date="${key}"
               >
-                +${items.length - visibleCount}건
+                +${
+                  items.length -
+                  visibleCount
+                }건
               </button>
             `
             : ''
@@ -1828,44 +2150,6 @@ function calendar() {
    통계 데이터
 ========================================================= */
 
-function statValueForItems(items, kind) {
-  const s = sum(items);
-
-  if (kind === '수입') {
-    return s.income;
-  }
-
-  if (kind === '지출') {
-    return s.expense;
-  }
-
-  if (kind === '저축') {
-    return s.saving;
-  }
-
-  if (kind === '투자') {
-    return s.plus - s.buy;
-  }
-
-  return s.balance;
-}
-
-function statDisplayValue(value, kind) {
-  if (kind === '수입') {
-    return `+${won(value)}`;
-  }
-
-  if (kind === '지출') {
-    return `−${won(Math.abs(value))}`;
-  }
-
-  if (kind === '저축') {
-    return won(value);
-  }
-
-  return signedMoney(value);
-}
-
 function transactionsForStatKind(
   items,
   kind
@@ -1885,14 +2169,40 @@ function transactionsForStatKind(
 }
 
 function statCategoryName(t) {
-  if (statKind !== '생활수지') {
+  if (
+    statKind !== '생활수지'
+  ) {
     if (statKind === '투자') {
+      const category =
+        String(
+          t.category || ''
+        );
+
+      if (
+        category.includes(
+          '외화 구매'
+        )
+      ) {
+        return '외화 구매';
+      }
+
+      if (
+        category.includes(
+          '외화 판매'
+        )
+      ) {
+        return '외화 판매';
+      }
+
       return inv(t) === 'buy'
         ? '매수'
         : '매도·배당';
     }
 
-    return t.category || '기타';
+    return (
+      t.category ||
+      '기타'
+    );
   }
 
   if (t.kind === '수입') {
@@ -1904,6 +2214,27 @@ function statCategoryName(t) {
   }
 
   if (t.kind === '투자') {
+    const category =
+      String(
+        t.category || ''
+      );
+
+    if (
+      category.includes(
+        '외화 구매'
+      )
+    ) {
+      return '외화 구매';
+    }
+
+    if (
+      category.includes(
+        '외화 판매'
+      )
+    ) {
+      return '외화 판매';
+    }
+
     return inv(t) === 'buy'
       ? '매수'
       : '매도·배당';
@@ -1916,7 +2247,9 @@ function statCategoryValue(t) {
   const amount =
     Number(t.amount || 0);
 
-  if (statKind === '생활수지') {
+  if (
+    statKind === '생활수지'
+  ) {
     return signedValue(t);
   }
 
@@ -1944,31 +2277,97 @@ function categoryTotalsForYear(
   items.forEach(t => {
     let category;
 
-    if (kind === '생활수지') {
+    if (
+      kind === '생활수지'
+    ) {
       if (t.kind === '수입') {
         category = '수입';
-      } else if (t.kind === '지출') {
+
+      } else if (
+        t.kind === '지출'
+      ) {
         category = '지출';
-      } else if (inv(t) === 'buy') {
-        category = '매수';
+
       } else {
-        category = '매도·배당';
+        const rawCategory =
+          String(
+            t.category || ''
+          );
+
+        if (
+          rawCategory.includes(
+            '외화 구매'
+          )
+        ) {
+          category =
+            '외화 구매';
+
+        } else if (
+          rawCategory.includes(
+            '외화 판매'
+          )
+        ) {
+          category =
+            '외화 판매';
+
+        } else if (
+          inv(t) === 'buy'
+        ) {
+          category = '매수';
+
+        } else {
+          category =
+            '매도·배당';
+        }
       }
-    } else if (kind === '투자') {
-      category =
-        inv(t) === 'buy'
-          ? '매수'
-          : '매도·배당';
+
+    } else if (
+      kind === '투자'
+    ) {
+      const rawCategory =
+        String(
+          t.category || ''
+        );
+
+      if (
+        rawCategory.includes(
+          '외화 구매'
+        )
+      ) {
+        category =
+          '외화 구매';
+
+      } else if (
+        rawCategory.includes(
+          '외화 판매'
+        )
+      ) {
+        category =
+          '외화 판매';
+
+      } else {
+        category =
+          inv(t) === 'buy'
+            ? '매수'
+            : '매도·배당';
+      }
+
     } else {
       category =
-        t.category || '기타';
+        t.category ||
+        '기타';
     }
 
     let value =
-      Number(t.amount || 0);
+      Number(
+        t.amount || 0
+      );
 
-    if (kind === '생활수지') {
-      value = signedValue(t);
+    if (
+      kind === '생활수지'
+    ) {
+      value =
+        signedValue(t);
     }
 
     if (
@@ -1979,14 +2378,19 @@ function categoryTotalsForYear(
     }
 
     totals[category] =
-      (totals[category] || 0) +
+      (
+        totals[category] ||
+        0
+      ) +
       value;
   });
 
   return totals;
 }
 
-function categoryColorIndex(category) {
+function categoryColorIndex(
+  category
+) {
   let hash = 0;
 
   for (
@@ -2005,115 +2409,27 @@ function categoryColorIndex(category) {
 }
 
 /* =========================================================
-   통계 - 전년 대비
-========================================================= */
-
-function comparisonCard(year) {
-  const current =
-    statValueForItems(
-      yearly(year),
-      statKind
-    );
-
-  const previous =
-    statValueForItems(
-      yearly(year - 1),
-      statKind
-    );
-
-  const difference =
-    current - previous;
-
-  let percent = null;
-
-  if (previous !== 0) {
-    percent =
-      difference /
-      Math.abs(previous) *
-      100;
-  }
-
-  return `
-    <section class="stat-comparison">
-
-      <div class="stat-comparison-title">
-        전년 대비
-      </div>
-
-      <div class="stat-comparison-main">
-
-        <div>
-
-          <small>
-            ${year}년
-          </small>
-
-          <strong>
-            ${statDisplayValue(
-              current,
-              statKind
-            )}
-          </strong>
-
-        </div>
-
-        <div class="stat-difference">
-
-          <small>
-            전년 대비
-          </small>
-
-          <strong>
-            ${signedMoney(difference)}
-          </strong>
-
-          ${
-            percent === null
-              ? ''
-              : `
-                <span>
-                  ${
-                    percent >= 0
-                      ? '+'
-                      : ''
-                  }${percent.toFixed(1)}%
-                </span>
-              `
-          }
-
-        </div>
-
-      </div>
-
-      <div class="stat-previous">
-        ${year - 1}년
-        ${statDisplayValue(
-          previous,
-          statKind
-        )}
-      </div>
-
-    </section>
-  `;
-}
-
-/* =========================================================
    통계 - 월별
 ========================================================= */
 
 function monthlyStats(year) {
   const monthData = [];
-
   const categorySet =
     new Set();
 
-  for (let m = 0; m < 12; m++) {
+  for (
+    let m = 0;
+    m < 12;
+    m++
+  ) {
     const items =
       tx.filter(t => {
-        const d = toDate(t.date);
+        const d =
+          toDate(t.date);
 
         return (
-          d.getFullYear() === year &&
+          d.getFullYear() ===
+            year &&
           d.getMonth() === m
         );
       });
@@ -2134,29 +2450,43 @@ function monthlyStats(year) {
         statCategoryValue(t);
 
       categories[category] =
-        (categories[category] || 0) +
+        (
+          categories[category] ||
+          0
+        ) +
         value;
 
-      categorySet.add(category);
+      categorySet.add(
+        category
+      );
     });
 
-    monthData.push(categories);
+    monthData.push(
+      categories
+    );
   }
 
   const categories =
     [...categorySet];
 
-  const allValues =
-    monthData.flatMap(data =>
+  const monthTotals =
+    monthData.map(data =>
       Object.values(data)
+        .reduce(
+          (
+            total,
+            value
+          ) =>
+            total +
+            Math.abs(value),
+          0
+        )
     );
 
-  const max =
+  const maxMonthTotal =
     Math.max(
       1,
-      ...allValues.map(value =>
-        Math.abs(value)
-      )
+      ...monthTotals
     );
 
   return `
@@ -2166,87 +2496,155 @@ function monthlyStats(year) {
         월별 ${statKind}
       </h2>
 
-      <div class="stat-chart-scroll">
+      <div
+        class="stat-horizontal-chart"
+      >
 
-        <div class="stat-month-chart">
+        ${monthData.map(
+          (
+            data,
+            monthIndex
+          ) => {
+            const total =
+              monthTotals[
+                monthIndex
+              ];
 
-          ${monthData.map(
-            (data, monthIndex) => `
-              <div class="stat-month-column">
+            const barWidth =
+              total
+                ? (
+                    total /
+                    maxMonthTotal *
+                    100
+                  )
+                : 0;
 
-                <div class="stat-bars">
+            return `
+              <div
+                class="
+                  stat-horizontal-month
+                "
+              >
 
-                  ${categories.map(category => {
-                    const value =
-                      data[category] || 0;
+                <span
+                  class="
+                    stat-horizontal-label
+                  "
+                >
+                  ${
+                    monthIndex + 1
+                  }월
+                </span>
 
-                    const height =
-                      value === 0
-                        ? 0
-                        : Math.max(
-                            4,
-                            Math.abs(value) /
-                              max *
-                              210
-                          );
+                <div
+                  class="
+                    stat-horizontal-track
+                  "
+                >
 
-                    return `
-                      <div
-                        class="
-                          stat-bar
-                          stat-color-${
-                            categoryColorIndex(
-                              category
-                            )
+                  <div
+                    class="
+                      stat-horizontal-stack
+                    "
+                    style="
+                      width:${barWidth}%
+                    "
+                  >
+
+                    ${categories
+                      .map(
+                        category => {
+                          const value =
+                            Math.abs(
+                              data[
+                                category
+                              ] ||
+                              0
+                            );
+
+                          if (
+                            !value ||
+                            !total
+                          ) {
+                            return '';
                           }
-                        "
-                        style="
-                          height:${height}px
-                        "
-                        title="
-                          ${esc(category)}
-                          ${num(value)}
-                        "
-                      ></div>
-                    `;
-                  }).join('')}
+
+                          const width =
+                            value /
+                            total *
+                            100;
+
+                          return `
+                            <i
+                              class="
+                                stat-horizontal-segment
+                                stat-color-${
+                                  categoryColorIndex(
+                                    category
+                                  )
+                                }
+                              "
+                              style="
+                                width:${width}%
+                              "
+                              title="${
+                                esc(
+                                  category
+                                )
+                              } ${
+                                won(
+                                  value
+                                )
+                              }"
+                            ></i>
+                          `;
+                        }
+                      )
+                      .join('')}
+
+                  </div>
 
                 </div>
 
-                <span>
-                  ${monthIndex + 1}월
-                </span>
-
               </div>
-            `
-          ).join('')}
-
-        </div>
+            `;
+          }
+        ).join('')}
 
       </div>
 
       ${
         categories.length
           ? `
-            <div class="stat-legend">
+            <div
+              class="stat-legend"
+            >
 
-              ${categories.map(category => `
-                <span>
+              ${categories
+                .map(
+                  category => `
+                    <span>
 
-                  <i
-                    class="
-                      stat-color-${
-                        categoryColorIndex(
+                      <i
+                        class="
+                          stat-color-${
+                            categoryColorIndex(
+                              category
+                            )
+                          }
+                        "
+                      ></i>
+
+                      ${
+                        esc(
                           category
                         )
                       }
-                    "
-                  ></i>
 
-                  ${esc(category)}
-
-                </span>
-              `).join('')}
+                    </span>
+                  `
+                )
+                .join('')}
 
             </div>
           `
@@ -2254,8 +2652,6 @@ function monthlyStats(year) {
       }
 
     </section>
-
-    ${categoryComparison(year)}
   `;
 }
 
@@ -2280,18 +2676,29 @@ function categoryStats(year) {
 
   const totalAbsolute =
     entries.reduce(
-      (sumValue, [, value]) =>
-        sumValue + Math.abs(value),
+      (
+        sumValue,
+        [, value]
+      ) =>
+        sumValue +
+        Math.abs(value),
       0
     );
 
   if (!entries.length) {
     return `
-      <section class="stat-section">
-        <h2>항목별 ${statKind}</h2>
+      <section
+        class="stat-section"
+      >
+
+        <h2>
+          항목별 ${statKind}
+        </h2>
+
         <div class="empty">
           통계 데이터가 없어요.
         </div>
+
       </section>
     `;
   }
@@ -2303,23 +2710,40 @@ function categoryStats(year) {
         항목별 ${statKind}
       </h2>
 
-      <div class="category-stat-list">
+      <div
+        class="category-stat-list"
+      >
 
         ${entries.map(
-          ([category, value]) => {
+          (
+            [
+              category,
+              value
+            ]
+          ) => {
             const ratio =
               totalAbsolute
                 ? (
-                    Math.abs(value) /
+                    Math.abs(
+                      value
+                    ) /
                     totalAbsolute *
                     100
                   )
                 : 0;
 
             return `
-              <div class="category-stat-row">
+              <div
+                class="
+                  category-stat-row
+                "
+              >
 
-                <div class="category-stat-head">
+                <div
+                  class="
+                    category-stat-head
+                  "
+                >
 
                   <div>
 
@@ -2335,23 +2759,37 @@ function categoryStats(year) {
                     ></i>
 
                     <b>
-                      ${esc(category)}
+                      ${
+                        esc(
+                          category
+                        )
+                      }
                     </b>
 
                   </div>
 
                   <strong>
                     ${
-                      statKind === '생활수지' ||
-                      statKind === '투자'
-                        ? signedMoney(value)
-                        : won(value)
+                      statKind ===
+                        '생활수지' ||
+                      statKind ===
+                        '투자'
+                        ? signedMoney(
+                            value
+                          )
+                        : won(
+                            value
+                          )
                     }
                   </strong>
 
                 </div>
 
-                <div class="category-stat-track">
+                <div
+                  class="
+                    category-stat-track
+                  "
+                >
 
                   <i
                     class="
@@ -2376,113 +2814,6 @@ function categoryStats(year) {
             `;
           }
         ).join('')}
-
-      </div>
-
-    </section>
-
-    ${categoryComparison(year)}
-  `;
-}
-
-/* =========================================================
-   통계 - 카테고리 전년 증감
-========================================================= */
-
-function categoryComparison(year) {
-  const current =
-    categoryTotalsForYear(
-      year,
-      statKind
-    );
-
-  const previous =
-    categoryTotalsForYear(
-      year - 1,
-      statKind
-    );
-
-  const categories =
-    [
-      ...new Set([
-        ...Object.keys(current),
-        ...Object.keys(previous)
-      ])
-    ];
-
-  if (!categories.length) {
-    return '';
-  }
-
-  categories.sort(
-    (a, b) =>
-      Math.abs(
-        (current[b] || 0) -
-        (previous[b] || 0)
-      ) -
-      Math.abs(
-        (current[a] || 0) -
-        (previous[a] || 0)
-      )
-  );
-
-  return `
-    <section class="stat-section stat-change-section">
-
-      <h2>
-        카테고리별 전년 증감
-      </h2>
-
-      <div class="stat-change-list">
-
-        ${categories.map(category => {
-          const now =
-            current[category] || 0;
-
-          const before =
-            previous[category] || 0;
-
-          const difference =
-            now - before;
-
-          return `
-            <div class="stat-change-row">
-
-              <div class="stat-change-name">
-
-                <i
-                  class="
-                    category-dot
-                    stat-color-${
-                      categoryColorIndex(
-                        category
-                      )
-                    }
-                  "
-                ></i>
-
-                <span>
-                  ${esc(category)}
-                </span>
-
-              </div>
-
-              <div class="stat-change-values">
-
-                <small>
-                  ${year - 1}
-                  ${won(Math.abs(before))}
-                </small>
-
-                <strong>
-                  ${signedMoney(difference)}
-                </strong>
-
-              </div>
-
-            </div>
-          `;
-        }).join('')}
 
       </div>
 
@@ -2524,7 +2855,9 @@ function stats() {
 
       </div>
 
-      <div class="stat-mode-tabs">
+      <div
+        class="stat-mode-tabs"
+      >
 
         <button
           data-stat-mode="monthly"
@@ -2565,8 +2898,6 @@ function stats() {
         </button>
 
       </div>
-
-      ${comparisonCard(year)}
 
       ${
         statMode === 'monthly'
@@ -2658,7 +2989,8 @@ function render() {
   }
 
   if (view === '설정') {
-    content = settingsHTML();
+    content =
+      settingsHTML();
   }
 
   root.innerHTML = `
@@ -2680,26 +3012,42 @@ function render() {
    내역 기간 이동
 ========================================================= */
 
-function moveHistory(direction) {
-  if (historyMode === 'day') {
+function moveHistory(
+  direction
+) {
+  if (
+    historyMode === 'day'
+  ) {
     historyDate =
       new Date(
-        historyDate.getFullYear(),
-        historyDate.getMonth(),
-        historyDate.getDate() +
+        historyDate
+          .getFullYear(),
+
+        historyDate
+          .getMonth(),
+
+        historyDate
+          .getDate() +
           direction,
+
         12
       );
 
     return;
   }
 
-  if (historyMode === 'year') {
+  if (
+    historyMode === 'year'
+  ) {
     historyDate =
       new Date(
-        historyDate.getFullYear() +
+        historyDate
+          .getFullYear() +
           direction,
-        historyDate.getMonth(),
+
+        historyDate
+          .getMonth(),
+
         1,
         12
       );
@@ -2709,9 +3057,13 @@ function moveHistory(direction) {
 
   historyDate =
     new Date(
-      historyDate.getFullYear(),
-      historyDate.getMonth() +
+      historyDate
+        .getFullYear(),
+
+      historyDate
+        .getMonth() +
         direction,
+
       1,
       12
     );
@@ -2723,7 +3075,9 @@ function moveHistory(direction) {
 
 function bind() {
   root
-    .querySelectorAll('[data-view]')
+    .querySelectorAll(
+      '[data-view]'
+    )
     .forEach(button => {
       button.onclick = () => {
         view =
@@ -2740,7 +3094,6 @@ function bind() {
       () => sheet()
     );
 
-  /* 홈 / 캘린더 월 이동 */
   if (
     view === '홈' ||
     view === '캘린더'
@@ -2752,8 +3105,13 @@ function bind() {
         () => {
           month =
             new Date(
-              month.getFullYear(),
-              month.getMonth() - 1,
+              month
+                .getFullYear(),
+
+              month
+                .getMonth() -
+                1,
+
               1,
               12
             );
@@ -2769,8 +3127,13 @@ function bind() {
         () => {
           month =
             new Date(
-              month.getFullYear(),
-              month.getMonth() + 1,
+              month
+                .getFullYear(),
+
+              month
+                .getMonth() +
+                1,
+
               1,
               12
             );
@@ -2784,7 +3147,9 @@ function bind() {
       ?.addEventListener(
         'click',
         () => {
-          month = new Date();
+          month =
+            new Date();
+
           month.setHours(
             12,
             0,
@@ -2797,7 +3162,6 @@ function bind() {
       );
   }
 
-  /* 내역 기간 이동 */
   if (view === '내역') {
     root
       .querySelector('#prev')
@@ -2839,10 +3203,8 @@ function bind() {
       );
   }
 
-  /* 거래 클릭 */
   bindRows();
 
-  /* 캘린더 + */
   root
     .querySelectorAll(
       '[data-add-date]'
@@ -2853,12 +3215,12 @@ function bind() {
 
         sheet(
           null,
-          button.dataset.addDate
+          button.dataset
+            .addDate
         );
       };
     });
 
-  /* 캘린더 날짜 → 내역 일 */
   root
     .querySelectorAll(
       '[data-open-date]'
@@ -2869,13 +3231,16 @@ function bind() {
 
         historyDate =
           toDate(
-            button.dataset.openDate
+            button.dataset
+              .openDate
           );
 
         historyMode = 'day';
 
         filter = '전체';
-        categoryFilter = '전체';
+        categoryFilter =
+          '전체';
+
         searchQuery = '';
 
         view = '내역';
@@ -2884,7 +3249,6 @@ function bind() {
       };
     });
 
-  /* 월 / 연 / 일 */
   root
     .querySelectorAll(
       '[data-history-mode]'
@@ -2892,13 +3256,13 @@ function bind() {
     .forEach(button => {
       button.onclick = () => {
         historyMode =
-          button.dataset.historyMode;
+          button.dataset
+            .historyMode;
 
         render();
       };
     });
 
-  /* 거래 종류 필터 */
   root
     .querySelectorAll(
       '[data-filter]'
@@ -2918,7 +3282,6 @@ function bind() {
   bindCategoryMenu();
   bindSearch();
 
-  /* 통계 종류 */
   root
     .querySelectorAll(
       '[data-stat]'
@@ -2932,7 +3295,6 @@ function bind() {
       };
     });
 
-  /* 월별 / 항목별 */
   root
     .querySelectorAll(
       '[data-stat-mode]'
@@ -2940,7 +3302,8 @@ function bind() {
     .forEach(button => {
       button.onclick = () => {
         statMode =
-          button.dataset.statMode;
+          button.dataset
+            .statMode;
 
         render();
       };
@@ -2953,8 +3316,13 @@ function bind() {
       () => {
         month =
           new Date(
-            month.getFullYear() - 1,
-            month.getMonth(),
+            month
+              .getFullYear() -
+              1,
+
+            month
+              .getMonth(),
+
             1,
             12
           );
@@ -2970,8 +3338,13 @@ function bind() {
       () => {
         month =
           new Date(
-            month.getFullYear() + 1,
-            month.getMonth(),
+            month
+              .getFullYear() +
+              1,
+
+            month
+              .getMonth(),
+
             1,
             12
           );
@@ -2985,9 +3358,13 @@ function bind() {
   }
 }
 
-function bindRows(container = root) {
+function bindRows(
+  container = root
+) {
   container
-    .querySelectorAll('[data-id]')
+    .querySelectorAll(
+      '[data-id]'
+    )
     .forEach(row => {
       row.onclick = e => {
         e.stopPropagation();
@@ -2996,7 +3373,9 @@ function bindRows(container = root) {
           tx.find(
             t =>
               String(t.id) ===
-              String(row.dataset.id)
+              String(
+                row.dataset.id
+              )
           );
 
         if (item) {
@@ -3041,7 +3420,8 @@ function bindCategoryMenu() {
         e.stopPropagation();
 
         categoryFilter =
-          item.dataset.category;
+          item.dataset
+            .category;
 
         render();
       };
@@ -3058,7 +3438,9 @@ function bindCategoryMenu() {
 
 function bindSearch() {
   const input =
-    root.querySelector('#search');
+    root.querySelector(
+      '#search'
+    );
 
   if (!input) {
     return;
@@ -3072,7 +3454,9 @@ function bindSearch() {
       historyBaseItems();
 
     const result =
-      root.querySelector('#result');
+      root.querySelector(
+        '#result'
+      );
 
     if (result) {
       result.innerHTML =
@@ -3088,7 +3472,9 @@ function bindSearch() {
 
     if (summary) {
       summary.textContent =
-        historySummary(items);
+        historySummary(
+          items
+        );
     }
   };
 }
@@ -3105,12 +3491,15 @@ function sheet(
     Boolean(t?.id);
 
   const initialKind =
-    t?.kind || '지출';
+    t?.kind ||
+    '지출';
 
   const el =
-    document.createElement('div');
+    document
+      .createElement('div');
 
-  el.className = 'modal';
+  el.className =
+    'modal';
 
   el.innerHTML = `
     <form class="sheet">
@@ -3135,7 +3524,9 @@ function sheet(
           (
             t
               ? date(t.date)
-              : date(new Date())
+              : date(
+                  new Date()
+                )
           )
         }"
         required
@@ -3152,7 +3543,8 @@ function sheet(
             type="button"
             data-kind="${item}"
             class="${
-              item === initialKind
+              item ===
+              initialKind
                 ? 'on'
                 : ''
             }"
@@ -3201,7 +3593,11 @@ function sheet(
 
       <input
         name="title"
-        value="${esc(t?.title || '')}"
+        value="${
+          esc(
+            t?.title || ''
+          )
+        }"
         required
       >
 
@@ -3211,7 +3607,11 @@ function sheet(
 
       <textarea
         name="note"
-      >${esc(t?.note || '')}</textarea>
+      >${
+        esc(
+          t?.note || ''
+        )
+      }</textarea>
 
       <p id="msg"></p>
 
@@ -3260,10 +3660,13 @@ function sheet(
     </form>
   `;
 
-  document.body.append(el);
+  document.body
+    .append(el);
 
   const form =
-    el.querySelector('form');
+    el.querySelector(
+      'form'
+    );
 
   const kindInput =
     form.elements.kind;
@@ -3275,25 +3678,34 @@ function sheet(
     form.elements.amount;
 
   const preview =
-    el.querySelector('#preview');
+    el.querySelector(
+      '#preview'
+    );
 
   function fillCategories() {
     const list =
-      cats(kindInput.value);
+      cats(
+        kindInput.value
+      );
 
     categorySelect.innerHTML =
-      list.map(category => `
-        <option
-          value="${esc(category)}"
-          ${
-            category === t?.category
-              ? 'selected'
-              : ''
-          }
-        >
-          ${esc(category)}
-        </option>
-      `).join('');
+      list.map(
+        category => `
+          <option
+            value="${
+              esc(category)
+            }"
+            ${
+              category ===
+              t?.category
+                ? 'selected'
+                : ''
+            }
+          >
+            ${esc(category)}
+          </option>
+        `
+      ).join('');
   }
 
   fillCategories();
@@ -3309,12 +3721,14 @@ function sheet(
             '[data-kind]'
           )
           .forEach(item =>
-            item.classList.remove(
-              'on'
-            )
+            item
+              .classList
+              .remove('on')
           );
 
-        button.classList.add('on');
+        button
+          .classList
+          .add('on');
 
         kindInput.value =
           button.dataset.kind;
@@ -3323,56 +3737,70 @@ function sheet(
       };
     });
 
-  amountInput.oninput = () => {
-    const raw =
-      amountInput.value
-        .replace(/,/g, '');
-
-    /*
-      순수 숫자라면 입력하면서
-      천 단위 쉼표 적용
-    */
-    if (/^\d+$/.test(raw)) {
-      amountInput.value =
-        num(raw);
-
-      preview.textContent = '';
-      return;
-    }
-
-    /*
-      계산식이면 결과 미리보기
-    */
-    try {
-      if (/[+\-*/()]/.test(raw)) {
-        preview.textContent =
-          `= ${num(calc(raw))}`;
-      } else {
-        preview.textContent = '';
-      }
-    } catch {
-      preview.textContent = '';
-    }
-  };
-
-  amountInput.onblur = () => {
-    try {
+  amountInput.oninput =
+    () => {
       const raw =
-        amountInput.value;
+        amountInput.value
+          .replace(/,/g, '');
 
-      if (/[+\-*/()]/.test(raw)) {
+      if (/^\d+$/.test(raw)) {
         amountInput.value =
-          num(calc(raw));
+          num(raw);
 
-        preview.textContent = '';
+        preview.textContent =
+          '';
+
+        return;
       }
-    } catch {
-      /* 저장 시 오류 표시 */
-    }
-  };
+
+      try {
+        if (
+          /[+\-*/()]/.test(
+            raw
+          )
+        ) {
+          preview.textContent =
+            `= ${num(
+              calc(raw)
+            )}`;
+        } else {
+          preview.textContent =
+            '';
+        }
+      } catch {
+        preview.textContent =
+          '';
+      }
+    };
+
+  amountInput.onblur =
+    () => {
+      try {
+        const raw =
+          amountInput.value;
+
+        if (
+          /[+\-*/()]/.test(
+            raw
+          )
+        ) {
+          amountInput.value =
+            num(
+              calc(raw)
+            );
+
+          preview.textContent =
+            '';
+        }
+      } catch {
+        /* 저장 시 표시 */
+      }
+    };
 
   el
-    .querySelector('.cancel')
+    .querySelector(
+      '.cancel'
+    )
     .onclick =
     () => el.remove();
 
@@ -3382,78 +3810,105 @@ function sheet(
     }
   };
 
-  form.onsubmit = async e => {
-    e.preventDefault();
+  form.onsubmit =
+    async e => {
+      e.preventDefault();
 
-    try {
-      const data =
-        new FormData(form);
+      try {
+        const data =
+          new FormData(form);
 
-      const payload = {
-        user_id:
-          user.id,
+        const payload = {
+          user_id:
+            user.id,
 
-        title:
-          String(
-            data.get('title')
-          ).trim(),
+          title:
+            String(
+              data.get(
+                'title'
+              )
+            ).trim(),
 
-        date:
-          makeISO(
-            data.get('date')
-          ),
+          date:
+            makeISO(
+              data.get(
+                'date'
+              )
+            ),
 
-        kind:
-          data.get('kind'),
+          kind:
+            data.get(
+              'kind'
+            ),
 
-        category:
-          data.get('category'),
+          category:
+            data.get(
+              'category'
+            ),
 
-        amount:
-          calc(
-            data.get('amount')
-          ),
+          amount:
+            calc(
+              data.get(
+                'amount'
+              )
+            ),
 
-        note:
-          String(
-            data.get('note')
-          ).trim()
-      };
+          note:
+            String(
+              data.get(
+                'note'
+              )
+            ).trim()
+        };
 
-      const result =
-        editing
-          ? await db
-              .from('transactions')
-              .update(payload)
-              .eq('id', t.id)
+        const result =
+          editing
+            ? await db
+                .from(
+                  'transactions'
+                )
+                .update(
+                  payload
+                )
+                .eq(
+                  'id',
+                  t.id
+                )
 
-          : await db
-              .from('transactions')
-              .insert(payload);
+            : await db
+                .from(
+                  'transactions'
+                )
+                .insert(
+                  payload
+                );
 
-      if (result.error) {
-        throw result.error;
+        if (result.error) {
+          throw result.error;
+        }
+
+        el.remove();
+
+        await load();
+
+      } catch (error) {
+        el
+          .querySelector(
+            '#msg'
+          )
+          .textContent =
+          error.message;
       }
-
-      el.remove();
-
-      await load();
-
-    } catch (error) {
-      el.querySelector(
-        '#msg'
-      ).textContent =
-        error.message;
-    }
-  };
+    };
 
   if (!editing) {
     return;
   }
 
-  /* 삭제 */
   el
-    .querySelector('.delete')
+    .querySelector(
+      '.delete'
+    )
     .onclick =
     async () => {
       if (
@@ -3466,12 +3921,19 @@ function sheet(
 
       const { error } =
         await db
-          .from('transactions')
+          .from(
+            'transactions'
+          )
           .delete()
-          .eq('id', t.id);
+          .eq(
+            'id',
+            t.id
+          );
 
       if (error) {
-        alert(error.message);
+        alert(
+          error.message
+        );
         return;
       }
 
@@ -3480,14 +3942,16 @@ function sheet(
       await load();
     };
 
-  /* 복사 */
   el
-    .querySelector('.copy')
+    .querySelector(
+      '.copy'
+    )
     .onclick =
     () => {
       const copy = {
         ...t,
         id: null,
+
         date:
           new Date()
             .toISOString()
@@ -3498,12 +3962,16 @@ function sheet(
       sheet(copy);
     };
 
-  /* 반복 */
   el
-    .querySelector('.repeat')
+    .querySelector(
+      '.repeat'
+    )
     .onclick =
     () => {
-      openRepeatSheet(t, el);
+      openRepeatSheet(
+        t,
+        el
+      );
     };
 }
 
@@ -3516,39 +3984,60 @@ function openRepeatSheet(
   parentModal
 ) {
   const modal =
-    document.createElement('div');
+    document
+      .createElement(
+        'div'
+      );
 
   modal.className =
     'modal repeat-modal';
 
   modal.innerHTML = `
-    <form class="sheet repeat-sheet">
+    <form
+      class="sheet repeat-sheet"
+    >
 
       <h2>
         반복 설정
       </h2>
 
-      <p class="repeat-description">
-        ${esc(transaction.title)}
+      <p
+        class="repeat-description"
+      >
+        ${
+          esc(
+            transaction.title
+          )
+        }
       </p>
 
       <label>
         반복 주기
       </label>
 
-      <select name="frequency">
+      <select
+        name="frequency"
+      >
+
+        <option value="daily">
+          매일
+        </option>
+
         <option value="weekly">
           매주
         </option>
+
         <option
           value="monthly"
           selected
         >
           매월
         </option>
+
         <option value="yearly">
           매년
         </option>
+
       </select>
 
       <label>
@@ -3574,7 +4063,10 @@ function openRepeatSheet(
 
         <button
           type="button"
-          class="soft cancel-repeat"
+          class="
+            soft
+            cancel-repeat
+          "
         >
           취소
         </button>
@@ -3588,7 +4080,8 @@ function openRepeatSheet(
     </form>
   `;
 
-  document.body.append(modal);
+  document.body
+    .append(modal);
 
   modal
     .querySelector(
@@ -3598,7 +4091,9 @@ function openRepeatSheet(
     () => modal.remove();
 
   modal.onclick = e => {
-    if (e.target === modal) {
+    if (
+      e.target === modal
+    ) {
       modal.remove();
     }
   };
@@ -3610,10 +4105,14 @@ function openRepeatSheet(
       e.preventDefault();
 
       const form =
-        new FormData(e.currentTarget);
+        new FormData(
+          e.currentTarget
+        );
 
       const frequency =
-        form.get('frequency');
+        form.get(
+          'frequency'
+        );
 
       const count =
         Math.max(
@@ -3621,7 +4120,9 @@ function openRepeatSheet(
           Math.min(
             120,
             Number(
-              form.get('count')
+              form.get(
+                'count'
+              )
             ) || 1
           )
         );
@@ -3634,7 +4135,8 @@ function openRepeatSheet(
           transaction.date
         );
 
-      const rowsToInsert = [];
+      const rowsToInsert =
+        [];
 
       for (
         let i = 1;
@@ -3643,48 +4145,89 @@ function openRepeatSheet(
       ) {
         let next;
 
-        if (frequency === 'weekly') {
-          next =
-            new Date(
-              anchor.getFullYear(),
-              anchor.getMonth(),
-              anchor.getDate() +
-                7 * i,
-              12
-            );
-        } else if (
-          frequency === 'yearly'
+        if (
+          frequency ===
+          'daily'
         ) {
           next =
             new Date(
-              anchor.getFullYear() + i,
-              anchor.getMonth(),
-              anchor.getDate(),
+              anchor
+                .getFullYear(),
+
+              anchor
+                .getMonth(),
+
+              anchor
+                .getDate() +
+                i,
+
               12
             );
+
+        } else if (
+          frequency ===
+          'weekly'
+        ) {
+          next =
+            new Date(
+              anchor
+                .getFullYear(),
+
+              anchor
+                .getMonth(),
+
+              anchor
+                .getDate() +
+                7 * i,
+
+              12
+            );
+
+        } else if (
+          frequency ===
+          'yearly'
+        ) {
+          next =
+            new Date(
+              anchor
+                .getFullYear() +
+                i,
+
+              anchor
+                .getMonth(),
+
+              anchor
+                .getDate(),
+
+              12
+            );
+
         } else {
-          /*
-            월말 보정
-          */
           const targetMonth =
-            anchor.getMonth() + i;
+            anchor
+              .getMonth() +
+            i;
 
           const targetYear =
-            anchor.getFullYear() +
+            anchor
+              .getFullYear() +
             Math.floor(
-              targetMonth / 12
+              targetMonth /
+              12
             );
 
           const normalizedMonth =
             (
-              targetMonth % 12 +
+              targetMonth %
+                12 +
               12
             ) % 12;
 
           const lastDay =
             new Date(
               targetYear,
-              normalizedMonth + 1,
+              normalizedMonth +
+                1,
               0,
               12
             ).getDate();
@@ -3692,11 +4235,16 @@ function openRepeatSheet(
           next =
             new Date(
               targetYear,
+
               normalizedMonth,
+
               Math.min(
-                anchor.getDate(),
+                anchor
+                  .getDate(),
+
                 lastDay
               ),
+
               12
             );
         }
@@ -3723,7 +4271,8 @@ function openRepeatSheet(
             ),
 
           note:
-            transaction.note || '',
+            transaction.note ||
+            '',
 
           repeat_series_id:
             seriesID,
@@ -3738,17 +4287,17 @@ function openRepeatSheet(
             i,
 
           repeat_anchor_date:
-            anchor.toISOString()
+            anchor
+              .toISOString()
         });
       }
 
       try {
-        /*
-          현재 거래도 같은 시리즈로 표시
-        */
         const currentUpdate =
           await db
-            .from('transactions')
+            .from(
+              'transactions'
+            )
             .update({
               repeat_series_id:
                 seriesID,
@@ -3763,20 +4312,27 @@ function openRepeatSheet(
                 0,
 
               repeat_anchor_date:
-                anchor.toISOString()
+                anchor
+                  .toISOString()
             })
             .eq(
               'id',
               transaction.id
             );
 
-        if (currentUpdate.error) {
-          throw currentUpdate.error;
+        if (
+          currentUpdate.error
+        ) {
+          throw (
+            currentUpdate.error
+          );
         }
 
         const result =
           await db
-            .from('transactions')
+            .from(
+              'transactions'
+            )
             .insert(
               rowsToInsert
             );
@@ -3786,14 +4342,18 @@ function openRepeatSheet(
         }
 
         modal.remove();
-        parentModal?.remove();
+
+        parentModal
+          ?.remove();
 
         await load();
 
       } catch (error) {
-        modal.querySelector(
-          '#repeatMsg'
-        ).textContent =
+        modal
+          .querySelector(
+            '#repeatMsg'
+          )
+          .textContent =
           error.message;
       }
     };
@@ -3805,12 +4365,17 @@ function openRepeatSheet(
 
 function bindSettings() {
   root
-    .querySelector('#logout')
+    .querySelector(
+      '#logout'
+    )
     .onclick =
-    () => db.auth.signOut();
+    () =>
+      db.auth.signOut();
 
   const imp =
-    root.querySelector('#import');
+    root.querySelector(
+      '#import'
+    );
 
   imp.onchange =
     async () => {
@@ -3852,20 +4417,26 @@ function bindSettings() {
 
         const removeResult =
           await db
-            .from('transactions')
+            .from(
+              'transactions'
+            )
             .delete()
             .eq(
               'user_id',
               user.id
             );
 
-        if (removeResult.error) {
-          throw removeResult.error;
+        if (
+          removeResult.error
+        ) {
+          throw (
+            removeResult.error
+          );
         }
 
         const items =
-          snap.transactions.map(
-            t => ({
+          snap.transactions
+            .map(t => ({
               user_id:
                 user.id,
 
@@ -3912,8 +4483,7 @@ function bindSettings() {
               repeat_anchor_date:
                 t.repeatAnchorDate ||
                 null
-            })
-          );
+            }));
 
         for (
           let i = 0;
@@ -3922,7 +4492,9 @@ function bindSettings() {
         ) {
           const { error } =
             await db
-              .from('transactions')
+              .from(
+                'transactions'
+              )
               .insert(
                 items.slice(
                   i,
@@ -3937,23 +4509,24 @@ function bindSettings() {
 
         const { error } =
           await db
-            .from('settings')
+            .from(
+              'settings'
+            )
             .upsert({
               user_id:
                 user.id,
 
               custom_categories:
-                snap.customCategories ||
+                snap
+                  .customCategories ||
                 [],
 
-              /*
-                예산 기능은 사용하지 않음
-              */
               monthly_budgets:
                 [],
 
               savings_goals:
-                snap.savingsGoals ||
+                snap
+                  .savingsGoals ||
                 [],
 
               updated_at:
@@ -3977,7 +4550,9 @@ function bindSettings() {
     };
 
   root
-    .querySelector('#export')
+    .querySelector(
+      '#export'
+    )
     .onclick =
     () => {
       const snap = {
@@ -4002,7 +4577,9 @@ function bindSettings() {
               t.category,
 
             amount:
-              Number(t.amount),
+              Number(
+                t.amount
+              ),
 
             note:
               t.note,
@@ -4027,11 +4604,13 @@ function bindSettings() {
           })),
 
         customCategories:
-          settings.custom_categories ||
+          settings
+            .custom_categories ||
           [],
 
         savingsGoals:
-          settings.savings_goals ||
+          settings
+            .savings_goals ||
           []
       };
 
@@ -4051,10 +4630,13 @@ function bindSettings() {
         );
 
       const url =
-        URL.createObjectURL(blob);
+        URL.createObjectURL(
+          blob
+        );
 
       const a =
-        document.createElement('a');
+        document
+          .createElement('a');
 
       a.href = url;
 
@@ -4067,7 +4649,9 @@ function bindSettings() {
 
       a.click();
 
-      URL.revokeObjectURL(url);
+      URL.revokeObjectURL(
+        url
+      );
     };
 }
 
@@ -4086,7 +4670,11 @@ db.auth.onAuthStateChange(
         await load();
       } catch (error) {
         root.innerHTML =
-          `DB 오류: ${esc(error.message)}`;
+          `DB 오류: ${
+            esc(
+              error.message
+            )
+          }`;
       }
     } else {
       auth();
@@ -4099,7 +4687,8 @@ const {
     session
   }
 } =
-  await db.auth.getSession();
+  await db.auth
+    .getSession();
 
 user =
   session?.user ||
@@ -4118,7 +4707,8 @@ if (user) {
 if (
   'serviceWorker' in navigator
 ) {
-  navigator.serviceWorker
+  navigator
+    .serviceWorker
     .register('./sw.js')
     .catch(() => {});
 }
