@@ -2690,9 +2690,11 @@ function statColorOverrides(
           .test(color)
       ) {
         rules.push(`
-          .stat-color-${index} {
+          .stat-color-${index},
+          .stat-color-${index}::before,
+          .stat-color-${index}::after {
             background:${color} !important;
-            color:${color} !important;
+            border-color:${color} !important;
           }
         `);
       }
@@ -2900,7 +2902,8 @@ function monthlyStats(year) {
 
   const showMonthlyMode =
     statKind === '수입' ||
-    statKind === '지출';
+    statKind === '지출' ||
+    statKind === '저축';
 
   if (
     showMonthlyMode &&
@@ -3309,28 +3312,17 @@ function stackedMonthlyStats(
                 }"
               >
                 <span class="stacked-month-label">
-                  <b>${monthIndex + 1}월</b>
-                  <small>
-                    ${
-                      total
-                        ? compactStatMoney(
-                            total
-                          )
-                        : ''
-                    }
-                  </small>
-                </span>
+                  <b>${monthIndex + 1}월</b></span>
 
                 <span class="stacked-month-space">
                   ${
                     total
                       ? `
                         <span
-                          class="stacked-month-bar"
-                          style="
-                            width:${overallWidth}%
-                          "
+                          class="stacked-bar-with-total"
+                          style="width:${overallWidth}%"
                         >
+                          <span class="stacked-month-bar">
                           ${activeCategories
                             .filter(
                               category =>
@@ -3360,11 +3352,9 @@ function stackedMonthlyStats(
                               ></i>
                             `)
                             .join('')}
+                          </span>
+                          <small class="stacked-total">${compactStatMoney(total)}</small>
                         </span>
-
-                        <small class="stacked-total">
-                          ${compactStatMoney(total)}
-                        </small>
                       `
                       : ''
                   }
@@ -3383,59 +3373,26 @@ function stackedMonthlyStats(
   `;
 }
 
-function investmentAnnualSummary(
-  year
-) {
-  const items =
-    yearly(year).filter(
-      t => t.kind === '투자'
-    );
-
+function investmentAnnualSummary(year) {
+  const items = yearly(year).filter(t => t.kind === '투자');
   let expense = 0;
   let income = 0;
 
   items.forEach(t => {
-    const value =
-      Math.abs(
-        Number(t.amount || 0)
-      );
+    const category = normalizedCategory(t.category);
+    const value = Math.abs(Number(t.amount || 0));
 
-    if (inv(t) === 'buy') {
-      expense += value;
-    } else {
-      income += value;
-    }
+    if (category === '매수' || category === '외화 구매') expense += value;
+    if (category === '매도' || category === '배당금' || category === '외화 판매') income += value;
   });
 
-  const net =
-    income - expense;
+  const net = income - expense;
 
   return `
     <div class="investment-annual-summary">
-      <div>
-        <span>총 지출</span>
-        <b class="negative">
-          −${money(expense)}
-        </b>
-      </div>
-
-      <div>
-        <span>총 수익</span>
-        <b class="positive">
-          +${money(income)}
-        </b>
-      </div>
-
-      <div class="net">
-        <span>합계</span>
-        <b class="${
-          net >= 0
-            ? 'positive'
-            : 'negative'
-        }">
-          ${signedMoney(net)}
-        </b>
-      </div>
+      <div><span>총 지출</span><b class="negative">−${money(expense)}</b></div>
+      <div><span>총 수익</span><b class="positive">+${money(income)}</b></div>
+      <div class="net"><span>합계</span><b class="${net >= 0 ? 'positive' : 'negative'}">${signedMoney(net)}</b></div>
     </div>
   `;
 }
