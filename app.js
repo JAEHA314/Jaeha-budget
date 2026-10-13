@@ -3390,8 +3390,8 @@ function investmentAnnualSummary(year) {
 
   return `
     <div class="investment-annual-summary">
-      <div><span>총 지출</span><b class="negative">−${money(expense)}</b></div>
-      <div><span>총 수익</span><b class="positive">+${money(income)}</b></div>
+      <div><span>총 지출</span><b class="negative">−${won(expense)}</b></div>
+      <div><span>총 수익</span><b class="positive">+${won(income)}</b></div>
       <div class="net"><span>합계</span><b class="${net >= 0 ? 'positive' : 'negative'}">${signedMoney(net)}</b></div>
     </div>
   `;
@@ -3698,6 +3698,11 @@ function categoryStats(year) {
 
         ${entries.map(
           ([category, value]) => {
+            const customColor = categoryColor(statKind, category);
+            const colorStyle = /^#[0-9a-f]{6}$/i.test(customColor)
+              ? `background:${customColor} !important; border-color:${customColor} !important;`
+              : '';
+
             const ratio =
               totalAbsolute
                 ? (
@@ -3732,6 +3737,7 @@ function categoryStats(year) {
                           )
                         }
                       "
+                      style="${colorStyle}"
                     ></i>
 
                     <b>
@@ -3765,9 +3771,7 @@ function categoryStats(year) {
                         )
                       }
                     "
-                    style="
-                      width:${ratio}%
-                    "
+                    style="width:${ratio}%; ${colorStyle}"
                   ></i>
                 </span>
 
