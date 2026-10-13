@@ -47,6 +47,7 @@ let searchQuery = '';
 let statKind = '지출';
 let statMode = 'monthly';
 let statDrillMonth = null;
+let statMonthlyView = 'separate';
 
 const hiddenStatCategories = new Set();
 
@@ -939,6 +940,71 @@ function allCategoriesForKind(
         .filter(Boolean)
     ])
   ];
+}
+
+function categorySetting(
+  kind,
+  name
+) {
+  return (
+    settings
+      .custom_categories ||
+    []
+  ).find(item => {
+    const itemKind =
+      item.kindRawValue ||
+      item.kind ||
+      item.type;
+
+    return (
+      itemKind === kind &&
+      normalizedCategory(
+        item.name
+      ) ===
+        normalizedCategory(name)
+    );
+  });
+}
+
+function categoryColor(
+  kind,
+  name
+) {
+  return (
+    categorySetting(
+      kind,
+      name
+    )?.color ||
+    ''
+  );
+}
+
+async function saveCategorySettings(
+  next
+) {
+  const { error } =
+    await db
+      .from('settings')
+      .upsert({
+        user_id: user.id,
+        custom_categories: next,
+        monthly_budgets:
+          settings.monthly_budgets ||
+          [],
+        savings_goals:
+          settings.savings_goals ||
+          [],
+        updated_at:
+          new Date()
+            .toISOString()
+      });
+
+  if (error) {
+    throw error;
+  }
+
+  settings.custom_categories =
+    next;
 }
 
 function cats(kind) {
@@ -2605,6 +2671,39 @@ function statColorMap(
   return map;
 }
 
+function statColorOverrides(
+  colors,
+  kind = statKind
+) {
+  const rules = [];
+
+  colors.forEach(
+    (index, category) => {
+      const color =
+        categoryColor(
+          kind,
+          category
+        );
+
+      if (
+        /^#[0-9a-f]{6}$/i
+          .test(color)
+      ) {
+        rules.push(`
+          .stat-color-${index} {
+            background:${color} !important;
+            color:${color} !important;
+          }
+        `);
+      }
+    }
+  );
+
+  return rules.length
+    ? `<style>${rules.join('')}</style>`
+    : '';
+}
+
 function compactStatMoney(value) {
   const n = Math.abs(
     Number(value || 0)
@@ -2799,12 +2898,65 @@ function monthlyStats(year) {
   const investment =
     statKind === '투자';
 
+  const showMonthlyMode =
+    statKind === '수입' ||
+    statKind === '지출';
+
+  if (
+    showMonthlyMode &&
+    statMonthlyView === 'stacked'
+  ) {
+    return stackedMonthlyStats(
+      year,
+      monthData,
+      categories,
+      activeCategories,
+      colors
+    );
+  }
+
   return `
     <section class="stat-section">
 
-      <h2>
-        월별 ${statKind}
-      </h2>
+      ${statColorOverrides(colors)}
+
+      <div class="stat-title-row">
+        <h2>
+          월별 ${statKind}
+        </h2>
+
+        ${
+          showMonthlyMode
+            ? `
+              <div class="stat-month-view-tabs">
+                <button
+                  type="button"
+                  data-stat-month-view="separate"
+                  class="${
+                    statMonthlyView === 'separate'
+                      ? 'on'
+                      : ''
+                  }"
+                >
+                  항목별 막대
+                </button>
+                <button
+                  type="button"
+                  data-stat-month-view="stacked"
+                >
+                  누적 막대
+                </button>
+              </div>
+            `
+            : ''
+        }
+      </div>
+
+      ${
+        investment
+          ? investmentAnnualSummary(year)
+          : ''
+      }
 
       <div
         class="
@@ -2838,6 +2990,17 @@ function monthlyStats(year) {
                   ) > 0
               );
 
+            const monthTotal =
+              Object.values(data)
+                .reduce(
+                  (sum, value) =>
+                    sum +
+                    Math.abs(
+                      Number(value || 0)
+                    ),
+                  0
+                );
+
             return `
               <button
                 type="button"
@@ -2845,16 +3008,26 @@ function monthlyStats(year) {
                 data-stat-month="${
                   monthIndex
                 }"
-                aria-label="${
-                  year
-                }년 ${
-                  monthIndex + 1
-                }월 ${statKind} 상세 보기"
               >
                 <span
                   class="stat-month-label"
                 >
-                  ${monthIndex + 1}월
+                  <b>${monthIndex + 1}월</b>
+                  ${
+                    showMonthlyMode
+                      ? `
+                        <small>
+                          ${
+                            monthTotal
+                              ? compactStatMoney(
+                                  monthTotal
+                                )
+                              : ''
+                          }
+                        </small>
+                      `
+                      : ''
+                  }
                 </span>
 
                 <span
@@ -2879,7 +3052,7 @@ function monthlyStats(year) {
                                 ) * (
                                   investment
                                     ? 50
-                                    : 100
+                                    : 82
                                 )
                               );
 
@@ -2914,11 +3087,7 @@ function monthlyStats(year) {
                                       bipolar-space
                                     "
                                   >
-                                    <i
-                                      class="
-                                        stat-month-zero
-                                      "
-                                    ></i>
+                                    <i class="stat-month-zero"></i>
 
                                     <span
                                       class="
@@ -3008,22 +3177,14 @@ function monthlyStats(year) {
 
                             return `
                               <span
-                                class="
-                                  stat-month-bar-line
-                                "
+                                class="stat-month-bar-line"
                               >
                                 <span
-                                  class="
-                                    stat-month-bar-space
-                                  "
+                                  class="stat-month-bar-space"
                                 >
                                   <span
-                                    class="
-                                      stat-standard-bar-wrap
-                                    "
-                                    style="
-                                      width:${width}%
-                                    "
+                                    class="stat-standard-bar-wrap"
+                                    style="width:${width}%"
                                   >
                                     <i
                                       class="
@@ -3035,7 +3196,6 @@ function monthlyStats(year) {
                                         }
                                       "
                                     ></i>
-
                                     <small>
                                       ${amount}
                                     </small>
@@ -3046,11 +3206,7 @@ function monthlyStats(year) {
                           })
                           .join('')
                       : `
-                        <span
-                          class="
-                            stat-month-empty
-                          "
-                        ></span>
+                        <span class="stat-month-empty"></span>
                       `
                   }
                 </span>
@@ -3067,6 +3223,220 @@ function monthlyStats(year) {
       )}
 
     </section>
+  `;
+}
+
+function stackedMonthlyStats(
+  year,
+  monthData,
+  categories,
+  activeCategories,
+  colors
+) {
+  const totals =
+    monthData.map(data =>
+      activeCategories.reduce(
+        (sum, category) =>
+          sum +
+          Math.abs(
+            Number(
+              data[category] || 0
+            )
+          ),
+        0
+      )
+    );
+
+  const maxTotal =
+    Math.max(
+      1,
+      ...totals
+    );
+
+  return `
+    <section class="
+      stat-section
+      stacked-stat-section
+    ">
+
+      ${statColorOverrides(colors)}
+
+      <div class="stat-title-row">
+        <h2>
+          월별 ${statKind}
+        </h2>
+
+        <div class="stat-month-view-tabs">
+          <button
+            type="button"
+            data-stat-month-view="separate"
+          >
+            항목별 막대
+          </button>
+          <button
+            type="button"
+            data-stat-month-view="stacked"
+            class="on"
+          >
+            누적 막대
+          </button>
+        </div>
+      </div>
+
+      <div class="stacked-month-chart">
+        ${monthData.map(
+          (data, monthIndex) => {
+            const total =
+              totals[monthIndex];
+
+            const overallWidth =
+              total
+                ? Math.max(
+                    1.5,
+                    (
+                      total /
+                      maxTotal
+                    ) * 86
+                  )
+                : 0;
+
+            return `
+              <button
+                type="button"
+                class="stacked-month-row"
+                data-stat-month="${
+                  monthIndex
+                }"
+              >
+                <span class="stacked-month-label">
+                  <b>${monthIndex + 1}월</b>
+                  <small>
+                    ${
+                      total
+                        ? compactStatMoney(
+                            total
+                          )
+                        : ''
+                    }
+                  </small>
+                </span>
+
+                <span class="stacked-month-space">
+                  ${
+                    total
+                      ? `
+                        <span
+                          class="stacked-month-bar"
+                          style="
+                            width:${overallWidth}%
+                          "
+                        >
+                          ${activeCategories
+                            .filter(
+                              category =>
+                                Math.abs(
+                                  data[category] || 0
+                                ) > 0
+                            )
+                            .map(category => `
+                              <i
+                                class="
+                                  stat-color-${
+                                    colors.get(
+                                      category
+                                    )
+                                  }
+                                "
+                                style="
+                                  width:${
+                                    (
+                                      Math.abs(
+                                        data[category]
+                                      ) /
+                                      total
+                                    ) * 100
+                                  }%
+                                "
+                              ></i>
+                            `)
+                            .join('')}
+                        </span>
+
+                        <small class="stacked-total">
+                          ${compactStatMoney(total)}
+                        </small>
+                      `
+                      : ''
+                  }
+                </span>
+              </button>
+            `;
+          }
+        ).join('')}
+      </div>
+
+      ${statLegend(
+        categories,
+        colors
+      )}
+    </section>
+  `;
+}
+
+function investmentAnnualSummary(
+  year
+) {
+  const items =
+    yearly(year).filter(
+      t => t.kind === '투자'
+    );
+
+  let expense = 0;
+  let income = 0;
+
+  items.forEach(t => {
+    const value =
+      Math.abs(
+        Number(t.amount || 0)
+      );
+
+    if (inv(t) === 'buy') {
+      expense += value;
+    } else {
+      income += value;
+    }
+  });
+
+  const net =
+    income - expense;
+
+  return `
+    <div class="investment-annual-summary">
+      <div>
+        <span>총 지출</span>
+        <b class="negative">
+          −${money(expense)}
+        </b>
+      </div>
+
+      <div>
+        <span>총 수익</span>
+        <b class="positive">
+          +${money(income)}
+        </b>
+      </div>
+
+      <div class="net">
+        <span>합계</span>
+        <b class="${
+          net >= 0
+            ? 'positive'
+            : 'negative'
+        }">
+          ${signedMoney(net)}
+        </b>
+      </div>
+    </div>
   `;
 }
 
@@ -3346,7 +3716,7 @@ function categoryStats(year) {
 
   if (!entries.length) {
     return `
-      <section class="stat-section">
+      <section class="stat-section">\n\n      ${statColorOverrides(colors)}
         <h2>
           항목별 ${statKind}
         </h2>
@@ -3759,6 +4129,85 @@ function settingsHTML() {
         <p id="datamsg" class="settings-message"></p>
       </section>
 
+
+      <section class="settings-group category-settings-group">
+        <h2>카테고리 관리</h2>
+        <p class="settings-help">
+          카테고리를 추가하고 통계 그래프 색상을 직접 지정할 수 있습니다.
+        </p>
+
+        ${kinds.map(kind => {
+          const names =
+            allCategoriesForKind(kind);
+
+          return `
+            <div class="category-settings-kind">
+              <h3>${kind}</h3>
+
+              <div class="category-settings-list">
+                ${names.map(name => {
+                  const saved =
+                    categorySetting(
+                      kind,
+                      name
+                    );
+
+                  const color =
+                    saved?.color ||
+                    '#8e8e93';
+
+                  return `
+                    <div class="category-setting-row">
+                      <input
+                        type="color"
+                        value="${color}"
+                        data-category-color
+                        data-kind="${esc(kind)}"
+                        data-category-name="${esc(name)}"
+                        aria-label="${esc(name)} 색상"
+                      >
+
+                      <span>
+                        ${esc(name)}
+                      </span>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+
+              <form
+                class="category-add-form"
+                data-category-add-form
+                data-kind="${esc(kind)}"
+              >
+                <input
+                  type="text"
+                  name="categoryName"
+                  placeholder="새 카테고리"
+                  autocomplete="off"
+                >
+
+                <input
+                  type="color"
+                  name="categoryColor"
+                  value="#8e8e93"
+                  aria-label="새 카테고리 색상"
+                >
+
+                <button type="submit">
+                  추가
+                </button>
+              </form>
+            </div>
+          `;
+        }).join('')}
+
+        <p
+          id="categorymsg"
+          class="settings-message"
+        ></p>
+      </section>
+
       <section class="settings-group">
         <h2>계정</h2>
         <p class="settings-account">
@@ -4086,6 +4535,7 @@ function bind() {
           button.dataset.stat;
 
         statDrillMonth = null;
+        statMonthlyView = 'separate';
 
         if (
           statKind ===
@@ -4113,6 +4563,21 @@ function bind() {
 
         statDrillMonth = null;
 
+        render();
+      };
+    });
+
+  root
+    .querySelectorAll(
+      '[data-stat-month-view]'
+    )
+    .forEach(button => {
+      button.onclick = () => {
+        statMonthlyView =
+          button.dataset
+            .statMonthView;
+
+        statDrillMonth = null;
         render();
       };
     });
@@ -5854,6 +6319,166 @@ function openRepeatSheet(
 ========================================================= */
 
 function bindSettings() {
+  root
+    .querySelectorAll(
+      '[data-category-color]'
+    )
+    .forEach(input => {
+      input.onchange =
+        async () => {
+          const kind =
+            input.dataset.kind;
+
+          const name =
+            normalizedCategory(
+              input.dataset
+                .categoryName
+            );
+
+          const next =
+            [
+              ...(
+                settings
+                  .custom_categories ||
+                []
+              )
+            ];
+
+          const index =
+            next.findIndex(item => {
+              const itemKind =
+                item.kindRawValue ||
+                item.kind ||
+                item.type;
+
+              return (
+                itemKind === kind &&
+                normalizedCategory(
+                  item.name
+                ) === name
+              );
+            });
+
+          const base =
+            index >= 0
+              ? next[index]
+              : {
+                  kind,
+                  name,
+                  custom:
+                    !(
+                      defaults[kind] ||
+                      []
+                    ).includes(name)
+                };
+
+          const updated = {
+            ...base,
+            kind,
+            name,
+            color:
+              input.value
+          };
+
+          if (index >= 0) {
+            next[index] =
+              updated;
+          } else {
+            next.push(updated);
+          }
+
+          try {
+            await saveCategorySettings(
+              next
+            );
+          } catch (error) {
+            const msg =
+              root.querySelector(
+                '#categorymsg'
+              );
+
+            if (msg) {
+              msg.textContent =
+                `저장 실패: ${error.message}`;
+            }
+          }
+        };
+    });
+
+  root
+    .querySelectorAll(
+      '[data-category-add-form]'
+    )
+    .forEach(form => {
+      form.onsubmit =
+        async event => {
+          event.preventDefault();
+
+          const kind =
+            form.dataset.kind;
+
+          const name =
+            normalizedCategory(
+              form.categoryName
+                .value
+                .trim()
+            );
+
+          if (!name) return;
+
+          if (
+            allCategoriesForKind(
+              kind
+            ).includes(name)
+          ) {
+            const msg =
+              root.querySelector(
+                '#categorymsg'
+              );
+
+            if (msg) {
+              msg.textContent =
+                '이미 있는 카테고리입니다.';
+            }
+            return;
+          }
+
+          const next = [
+            ...(
+              settings
+                .custom_categories ||
+              []
+            ),
+            {
+              kind,
+              name,
+              color:
+                form.categoryColor
+                  .value,
+              custom: true
+            }
+          ];
+
+          try {
+            await saveCategorySettings(
+              next
+            );
+
+            render();
+          } catch (error) {
+            const msg =
+              root.querySelector(
+                '#categorymsg'
+              );
+
+            if (msg) {
+              msg.textContent =
+                `추가 실패: ${error.message}`;
+            }
+          }
+        };
+    });
+
   root
     .querySelector('#logout')
     ?.addEventListener(
