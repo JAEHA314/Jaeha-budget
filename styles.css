@@ -4255,3 +4255,328 @@ svg {
     height: 12px !important;
   }
 }
+
+
+/* =========================================================
+   RESPONSIVE DESKTOP + STACKED + CATEGORY SETTINGS
+========================================================= */
+
+.stat-month-label {
+  display: flex !important;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 1px;
+}
+
+.stat-month-label b {
+  font: inherit;
+  font-weight: 500;
+}
+
+.stat-month-label small {
+  font-size: 0.72em;
+  color: #aaa;
+  white-space: nowrap;
+}
+
+.stat-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.stat-title-row h2 {
+  margin: 0;
+}
+
+.stat-month-view-tabs {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 10px;
+  background: #f2f2f3;
+}
+
+.stat-month-view-tabs button {
+  border: 0;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: transparent;
+  color: #888;
+  font: inherit;
+  font-size: 11px;
+}
+
+.stat-month-view-tabs button.on {
+  background: #ddd;
+  color: #222;
+  font-weight: 700;
+}
+
+.stacked-month-chart {
+  display: grid;
+  gap: 9px;
+  width: 100%;
+}
+
+.stacked-month-row {
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+
+.stacked-month-label {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  color: #777;
+  font-size: 11px;
+}
+
+.stacked-month-label small {
+  color: #aaa;
+  font-size: 8px;
+}
+
+.stacked-month-space {
+  position: relative;
+  display: block;
+  min-width: 0;
+  height: 10px;
+}
+
+.stacked-month-bar {
+  display: flex;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+}
+
+.stacked-month-bar i {
+  display: block;
+  height: 100%;
+  flex: 0 0 auto;
+}
+
+.stacked-total {
+  position: absolute;
+  top: 50%;
+  margin-left: 5px;
+  transform: translateY(-50%);
+  color: #888;
+  font-size: 8px;
+  white-space: nowrap;
+}
+
+.investment-annual-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  margin: 0 0 18px;
+  overflow: hidden;
+  border-radius: 14px;
+  background: #ececee;
+}
+
+.investment-annual-summary > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 13px 14px;
+  background: #f7f7f8;
+}
+
+.investment-annual-summary span {
+  color: #777;
+  font-size: 11px;
+}
+
+.investment-annual-summary b {
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.investment-annual-summary .positive {
+  color: #007aff;
+}
+
+.investment-annual-summary .negative {
+  color: #ff3b30;
+}
+
+.category-settings-kind {
+  margin-top: 20px;
+}
+
+.category-settings-kind h3 {
+  margin: 0 0 10px;
+  font-size: 14px;
+}
+
+.category-settings-list {
+  display: grid;
+  gap: 7px;
+}
+
+.category-setting-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 34px;
+}
+
+.category-setting-row input[type="color"],
+.category-add-form input[type="color"] {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.category-setting-row span {
+  font-size: 13px;
+}
+
+.category-add-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 32px auto;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.category-add-form input[type="text"] {
+  min-width: 0;
+  height: 38px;
+  padding: 0 11px;
+  border: 1px solid #e4e4e6;
+  border-radius: 10px;
+  background: white;
+  font: inherit;
+  font-size: 13px;
+}
+
+.category-add-form button {
+  border: 0;
+  border-radius: 10px;
+  padding: 0 13px;
+  background: #e4e4e6;
+  font: inherit;
+  font-size: 12px;
+}
+
+/* 데스크톱에서 창이 커질수록 통계도 함께 커짐 */
+@media (min-width: 760px) {
+  .stats-page {
+    max-width: min(1180px, calc(100vw - 72px)) !important;
+    margin-inline: auto;
+  }
+
+  .stat-section {
+    width: 100%;
+  }
+
+  .stat-section h2 {
+    font-size: clamp(17px, 1.45vw, 24px) !important;
+  }
+
+  .stat-month-chart,
+  .stacked-month-chart {
+    gap: clamp(7px, 0.75vw, 13px) !important;
+  }
+
+  .stat-month-group,
+  .stacked-month-row {
+    grid-template-columns:
+      clamp(48px, 5vw, 74px)
+      minmax(0, 1fr) !important;
+    gap: clamp(10px, 1.2vw, 18px) !important;
+  }
+
+  .stat-month-label,
+  .stacked-month-label {
+    font-size: clamp(11px, 0.9vw, 15px) !important;
+  }
+
+  .stat-month-label small,
+  .stacked-month-label small {
+    font-size: clamp(8px, 0.65vw, 11px) !important;
+  }
+
+  .stat-month-bar-line {
+    min-height: clamp(7px, 0.65vw, 11px) !important;
+  }
+
+  .stat-month-bar,
+  .stacked-month-bar {
+    height: clamp(4px, 0.42vw, 7px) !important;
+  }
+
+  .stat-standard-bar-wrap small,
+  .investment-month-chart
+  .stat-bipolar-bar-wrap small,
+  .stacked-total {
+    font-size: clamp(8px, 0.68vw, 11px) !important;
+  }
+
+  .stat-legend button,
+  .stat-legend-actions button {
+    font-size: clamp(10px, 0.8vw, 13px) !important;
+  }
+
+  .stat-month-view-tabs button {
+    font-size: clamp(10px, 0.8vw, 13px);
+    padding: 7px 12px;
+  }
+
+  .investment-annual-summary span {
+    font-size: clamp(11px, 0.8vw, 13px);
+  }
+
+  .investment-annual-summary b {
+    font-size: clamp(13px, 1vw, 17px);
+  }
+}
+
+@media (max-width: 430px) {
+  .stat-title-row {
+    align-items: flex-start;
+  }
+
+  .stat-month-view-tabs button {
+    padding: 5px 7px;
+    font-size: 9px;
+  }
+
+  .investment-annual-summary {
+    gap: 0;
+  }
+
+  .investment-annual-summary > div {
+    padding: 10px 8px;
+  }
+
+  .investment-annual-summary span {
+    font-size: 9px;
+  }
+
+  .investment-annual-summary b {
+    font-size: 10px;
+  }
+
+  .stacked-month-chart {
+    gap: 7px;
+  }
+}
