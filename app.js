@@ -3379,11 +3379,11 @@ function investmentAnnualSummary(year) {
   let income = 0;
 
   items.forEach(t => {
-    const category = normalizedCategory(t.category);
     const value = Math.abs(Number(t.amount || 0));
+    const direction = inv(t);
 
-    if (category === '매수' || category === '외화 구매') expense += value;
-    if (category === '매도' || category === '배당금' || category === '외화 판매') income += value;
+    if (direction === 'buy') expense += value;
+    if (direction === 'plus') income += value;
   });
 
   const net = income - expense;
@@ -3687,6 +3687,8 @@ function categoryStats(year) {
 
   return `
     <section class="stat-section">
+
+      ${statColorOverrides(colors)}
 
       <h2>
         항목별 ${statKind}
