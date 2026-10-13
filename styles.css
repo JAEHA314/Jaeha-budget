@@ -4580,3 +4580,187 @@ svg {
     gap: 7px;
   }
 }
+
+
+/* ===== Statistics layout refinement v3 ===== */
+
+/* 월별 묶음: 막대 두께 통일 + 월간 간격 확보 */
+.stat-month-chart {
+  display:flex !important;
+  flex-direction:column !important;
+  gap:12px !important;
+  width:100% !important;
+}
+
+.stat-month-group {
+  display:grid !important;
+  grid-template-columns:48px minmax(0,1fr) !important;
+  align-items:center !important;
+  gap:10px !important;
+  width:100% !important;
+  min-width:0 !important;
+  padding:0 !important;
+  border:0 !important;
+  background:transparent !important;
+}
+
+.stat-month-bars {
+  display:flex !important;
+  flex-direction:column !important;
+  gap:3px !important;
+  min-width:0 !important;
+}
+
+.stat-month-bar-line,
+.stat-month-bar-space,
+.stat-standard-bar-wrap {
+  height:7px !important;
+  min-height:7px !important;
+  line-height:7px !important;
+  margin:0 !important;
+}
+
+.stat-month-bar {
+  display:block !important;
+  height:5px !important;
+  min-height:5px !important;
+  max-height:5px !important;
+  border-radius:999px !important;
+}
+
+.stat-standard-bar-wrap {
+  position:relative !important;
+  display:flex !important;
+  align-items:center !important;
+  overflow:visible !important;
+}
+
+.stat-standard-bar-wrap > .stat-month-bar { width:100% !important; }
+
+.stat-standard-bar-wrap > small {
+  position:absolute !important;
+  left:calc(100% + 6px) !important;
+  top:50% !important;
+  transform:translateY(-50%) !important;
+  white-space:nowrap !important;
+  line-height:1 !important;
+}
+
+/* 누적막대: 금액은 막대 끝에 한 번만 */
+.stacked-month-label small { display:none !important; }
+
+.stacked-month-space {
+  position:relative !important;
+  height:14px !important;
+  min-width:0 !important;
+  overflow:visible !important;
+}
+
+.stacked-bar-with-total {
+  position:relative !important;
+  display:block !important;
+  height:14px !important;
+  max-width:calc(100% - 62px) !important;
+}
+
+.stacked-month-bar {
+  width:100% !important;
+  height:8px !important;
+  min-height:8px !important;
+  border-radius:999px !important;
+}
+
+.stacked-total {
+  position:absolute !important;
+  left:calc(100% + 7px) !important;
+  top:4px !important;
+  margin:0 !important;
+  transform:translateY(-50%) !important;
+  white-space:nowrap !important;
+  line-height:1 !important;
+}
+
+/* 데스크톱에서는 창이 커질수록 확실히 확대 */
+@media (min-width:760px) {
+  .stat-section { font-size:clamp(14px,1.35vw,21px) !important; }
+  .stat-section h2,
+  .stat-title-row h2 { font-size:clamp(19px,1.8vw,29px) !important; }
+
+  .stat-month-chart { gap:clamp(16px,1.55vw,27px) !important; }
+
+  .stat-month-group,
+  .stacked-month-row {
+    grid-template-columns:clamp(62px,5.5vw,94px) minmax(0,1fr) !important;
+    gap:clamp(13px,1.25vw,22px) !important;
+  }
+
+  .stat-month-label,
+  .stacked-month-label { font-size:clamp(14px,1.2vw,20px) !important; }
+
+  .stat-month-label small { font-size:clamp(10px,.9vw,15px) !important; }
+
+  .stat-month-bars { gap:clamp(4px,.4vw,7px) !important; }
+
+  .stat-month-bar-line,
+  .stat-month-bar-space,
+  .stat-standard-bar-wrap {
+    height:clamp(11px,.9vw,16px) !important;
+    min-height:clamp(11px,.9vw,16px) !important;
+    line-height:clamp(11px,.9vw,16px) !important;
+  }
+
+  .stat-month-bar {
+    height:clamp(7px,.58vw,10px) !important;
+    min-height:clamp(7px,.58vw,10px) !important;
+    max-height:clamp(7px,.58vw,10px) !important;
+  }
+
+  .stat-standard-bar-wrap > small,
+  .investment-month-chart .stat-bipolar-bar-wrap small,
+  .stacked-total { font-size:clamp(11px,.95vw,16px) !important; }
+
+  .stat-legend button,
+  .stat-legend-actions button { font-size:clamp(12px,1vw,17px) !important; }
+
+  .stat-month-view-tabs button {
+    font-size:clamp(12px,1vw,17px) !important;
+    padding:8px 14px !important;
+  }
+
+  .stacked-month-chart { gap:clamp(15px,1.45vw,25px) !important; }
+  .stacked-month-space,
+  .stacked-bar-with-total { height:clamp(16px,1.3vw,22px) !important; }
+  .stacked-month-bar {
+    height:clamp(9px,.75vw,13px) !important;
+    min-height:clamp(9px,.75vw,13px) !important;
+  }
+
+  .investment-annual-summary span { font-size:clamp(13px,1.05vw,18px) !important; }
+  .investment-annual-summary b { font-size:clamp(16px,1.4vw,23px) !important; }
+
+  .category-stat-name,
+  .category-stat-value,
+  .category-stat-percent { font-size:clamp(14px,1.15vw,19px) !important; }
+}
+
+@media (max-width:759px) {
+  .stat-month-chart { gap:8px !important; }
+  .stat-month-group {
+    grid-template-columns:42px minmax(0,1fr) !important;
+    gap:7px !important;
+  }
+  .stat-month-bars { gap:2px !important; }
+  .stat-month-bar-line,
+  .stat-month-bar-space,
+  .stat-standard-bar-wrap {
+    height:6px !important;
+    min-height:6px !important;
+    line-height:6px !important;
+  }
+  .stat-month-bar {
+    height:4px !important;
+    min-height:4px !important;
+    max-height:4px !important;
+  }
+  .stacked-bar-with-total { max-width:calc(100% - 50px) !important; }
+}
