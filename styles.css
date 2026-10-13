@@ -4764,3 +4764,40 @@ svg {
   }
   .stacked-bar-with-total { max-width:calc(100% - 50px) !important; }
 }
+
+/* 2026-10-13: 투자 연간 요약 박스를 생활수지 연간 요약과 동일한 높이로 */
+.investment-annual-summary {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  margin: 0 0 12px !important;
+  border-radius: 10px !important;
+}
+
+.investment-annual-summary > div {
+  justify-content: center;
+  gap: 2px !important;
+  min-height: 0 !important;
+  padding: 8px 14px !important;
+}
+
+.investment-annual-summary span {
+  font-size: 11px !important;
+  line-height: 1.15;
+}
+
+.investment-annual-summary b {
+  font-size: 12px !important;
+  line-height: 1.15;
+}
+
+@media (max-width: 700px) {
+  .investment-annual-summary > div {
+    padding: 8px 8px !important;
+  }
+  .investment-annual-summary span {
+    font-size: 9px !important;
+  }
+  .investment-annual-summary b {
+    font-size: 10px !important;
+  }
+}
